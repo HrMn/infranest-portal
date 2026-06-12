@@ -40,7 +40,8 @@ export interface Transaction {
   receiptNo: string
   voucherNo: string
   remarks: string
-  category: TransactionCategory | string
+  status: string            // col K — e.g. Done, Pending, Cleared
+  category: TransactionCategory | string  // derived from Particulars, not a sheet column
 }
 
 export interface TransactionCreatePayload {
@@ -54,5 +55,5 @@ export interface TransactionCreatePayload {
   receiptNo: string
   voucherNo: string
   remarks: string
-  category: string
+  status: string
 }

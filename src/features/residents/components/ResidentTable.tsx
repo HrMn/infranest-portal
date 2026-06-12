@@ -50,9 +50,16 @@ export function ResidentTable({ residents, loading }: Props) {
       width: 90,
     },
     {
-      title: 'Owner Type',
-      dataIndex: 'ownerType',
-      key: 'ownerType',
+      title: 'Owner',
+      dataIndex: 'owner',
+      key: 'owner',
+      width: 160,
+      ellipsis: true,
+    },
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
       width: 110,
     },
     {

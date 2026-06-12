@@ -1,10 +1,10 @@
 export interface MMCApartment {
   slNo: number
-  ownerType: string
+  owner: string
+  type: string
+  ownerType: string   // combined "owner | type"
   apartment: string
   occupied: boolean
-  category: string
-  subcategory: string
   collections: Record<string, number | null>
 }
 

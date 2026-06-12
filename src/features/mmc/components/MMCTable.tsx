@@ -69,23 +69,17 @@ export function MMCTable({ mmcStatus, loading }: Props) {
       sorter: (a, b) => a.apartment.localeCompare(b.apartment),
     },
     {
-      title: 'Owner Type',
-      dataIndex: 'ownerType',
-      key: 'ownerType',
+      title: 'Owner',
+      dataIndex: 'owner',
+      key: 'owner',
+      width: 150,
+      ellipsis: true,
+    },
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
       width: 100,
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      width: 120,
-    },
-    {
-      title: 'Occupied',
-      dataIndex: 'occupied',
-      key: 'occupied',
-      width: 80,
-      render: (v: boolean) => v ? <Tag color="blue">Yes</Tag> : <Tag>No</Tag>,
     },
   ]
 

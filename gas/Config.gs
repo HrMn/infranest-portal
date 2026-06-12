@@ -30,50 +30,56 @@ var Config = (function () {
 
   // ---------------------------------------------------------------------------
   // Income_Expense column indices (0-based)
+  // Actual sheet: Date | Particulars | Expenditure | Income | Payment Mode |
+  //               Payment Type | Apartment | Receipt No | Voucher No | Remarks | Status
   // ---------------------------------------------------------------------------
   var IE_COLS = {
-    DATE:         0,
-    PARTICULARS:  1,
-    EXPENDITURE:  2,
-    INCOME:       3,
-    PAYMENT_MODE: 4,
-    PAYMENT_TYPE: 5,
-    APARTMENT:    6,
-    RECEIPT_NO:   7,
-    VOUCHER_NO:   8,
-    REMARKS:      9,
-    CATEGORY:     10, // Added in Phase 1B — may not exist yet
+    DATE:         0,   // A
+    PARTICULARS:  1,   // B
+    EXPENDITURE:  2,   // C
+    INCOME:       3,   // D
+    PAYMENT_MODE: 4,   // E
+    PAYMENT_TYPE: 5,   // F
+    APARTMENT:    6,   // G
+    RECEIPT_NO:   7,   // H
+    VOUCHER_NO:   8,   // I
+    REMARKS:      9,   // J
+    STATUS:       10,  // K — transaction status (e.g. Done, Pending, Cleared)
   };
 
   // ---------------------------------------------------------------------------
   // MMC column indices (0-based)
+  // Actual sheet: Sl.No | Owner | Type | Apartment | (E,F,G skipped) | Apr-2026 …
   // ---------------------------------------------------------------------------
   var MMC_COLS = {
-    SL_NO:       0,
-    OWNER_TYPE:  1,
-    APARTMENT:   2,
-    OCCUPIED:    3,
-    CATEGORY:    4,
-    SUBCATEGORY: 5,
-    MONTHS_START: 6, // Month columns start at index 6
+    SL_NO:        0,  // A
+    OWNER:        1,  // B
+    TYPE:         2,  // C
+    APARTMENT:    3,  // D
+    // E(4), F(5), G(6) — skipped
+    MONTHS_START: 7,  // H onwards — month columns (Apr-2026, May-2026 …)
   };
 
   // ---------------------------------------------------------------------------
   // Residents column indices (0-based)
+  // Actual sheet: Sl.No | Owner | Type | Apartment | Mobile | MailID |
+  //               Occupied? | Occupant Category | Occupant Subcategory |
+  //               Occupant Details | Adults | Kids | Total
   // ---------------------------------------------------------------------------
   var RESIDENT_COLS = {
-    SL_NO:            0,
-    OWNER_TYPE:       1,
-    APARTMENT:        2,
-    MOBILE:           3,
-    EMAIL:            4,
-    OCCUPIED:         5,
-    CATEGORY:         6,
-    SUBCATEGORY:      7,
-    OCCUPANT_DETAILS: 8,
-    ADULTS:           9,
-    KIDS:             10,
-    TOTAL:            11,
+    SL_NO:            0,   // A - Sl. No.
+    OWNER:            1,   // B - Owner
+    TYPE:             2,   // C - Type
+    APARTMENT:        3,   // D - Apartment
+    MOBILE:           4,   // E - Mobile
+    EMAIL:            5,   // F - MailID
+    OCCUPIED:         6,   // G - Occupied?
+    CATEGORY:         7,   // H - Occupant Category
+    SUBCATEGORY:      8,   // I - Occupant Subcategory
+    OCCUPANT_DETAILS: 9,   // J - Occupant Details
+    ADULTS:           10,  // K - Adults
+    KIDS:             11,  // L - Kids
+    TOTAL:            12,  // M - Total
   };
 
   // ---------------------------------------------------------------------------

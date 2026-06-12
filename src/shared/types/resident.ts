@@ -1,6 +1,8 @@
 export interface Resident {
   slNo: number
-  ownerType: string
+  owner: string       // col B — owner name
+  type: string        // col C — type classification
+  ownerType: string   // combined "owner | type" for display
   apartment: string
   mobile?: string
   email?: string

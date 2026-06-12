@@ -14,11 +14,8 @@ var TransactionService = (function () {
     var income      = Utils.parseNumber(row[C.INCOME]);
     var particulars = String(row[C.PARTICULARS] || '').trim();
 
-    // Resolve category: use explicit column if it exists, else derive from particulars
-    var category = String(row[C.CATEGORY] || '').trim();
-    if (!category) {
-      category = Utils.resolveCategory(particulars, income !== null && income > 0);
-    }
+    // Category is always derived from Particulars text (no category column in the sheet)
+    var category = Utils.resolveCategory(particulars, income !== null && income > 0);
 
     var rawDate = row[C.DATE];
     var dateStr = '';
@@ -40,6 +37,7 @@ var TransactionService = (function () {
       receiptNo:   String(row[C.RECEIPT_NO]   || '').trim(),
       voucherNo:   String(row[C.VOUCHER_NO]   || '').trim(),
       remarks:     String(row[C.REMARKS]      || '').trim(),
+      status:      String(row[C.STATUS]       || '').trim(),
       category:    category,
     };
   }
@@ -83,7 +81,7 @@ var TransactionService = (function () {
     newRow[C.RECEIPT_NO]   = payload.receiptNo || '';
     newRow[C.VOUCHER_NO]   = payload.voucherNo || '';
     newRow[C.REMARKS]      = payload.remarks || '';
-    newRow[C.CATEGORY]     = payload.category || '';
+    newRow[C.STATUS]       = payload.status || '';
     sheet.appendRow(newRow);
     return { rowIndex: sheet.getLastRow() };
   }
@@ -104,7 +102,7 @@ var TransactionService = (function () {
     row[C.RECEIPT_NO]   = payload.receiptNo    !== undefined ? payload.receiptNo    : row[C.RECEIPT_NO];
     row[C.VOUCHER_NO]   = payload.voucherNo    !== undefined ? payload.voucherNo    : row[C.VOUCHER_NO];
     row[C.REMARKS]      = payload.remarks      !== undefined ? payload.remarks      : row[C.REMARKS];
-    row[C.CATEGORY]     = payload.category     !== undefined ? payload.category     : row[C.CATEGORY];
+    row[C.STATUS]       = payload.status       !== undefined ? payload.status       : row[C.STATUS];
     range.setValues([row]);
   }
 
