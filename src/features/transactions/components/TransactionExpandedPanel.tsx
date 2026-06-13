@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Transaction } from '@/shared/types'
 import { useUpdateTransaction, useDeleteTransaction } from '../hooks/useTransactions'
 
-const PAYMENT_MODES = ['Cash', 'Online', 'UPI', 'NEFT', 'RTGS', 'Cheque']
+const PAYMENT_MODES = ['Online', 'Cash']
 const STATUS_OPTIONS = ['Pending Verification', 'Verified']
 
 interface Props {

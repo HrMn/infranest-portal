@@ -45,6 +45,18 @@ export function useDeleteTransaction(fy: string) {
   })
 }
 
+/** Create a single transaction where fy is determined by the caller (e.g. derived from the date). */
+export function useCreateTransactionDynamic() {
+  const qc    = useQueryClient()
+  const token = useAuthStore((s) => s.user?.idToken ?? '')
+
+  return useMutation({
+    mutationFn: (payload: TransactionCreatePayload & { fy: string }) =>
+      gasClient.post<{ rowIndex: number }>('createTransaction', payload, token),
+    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: txnKey(vars.fy) }),
+  })
+}
+
 export function useImportTransactions(fy: string) {
   const qc    = useQueryClient()
   const token = useAuthStore((s) => s.user?.idToken ?? '')

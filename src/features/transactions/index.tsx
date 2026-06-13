@@ -4,6 +4,7 @@ import { useTransactions } from './hooks/useTransactions'
 import { useAuthStore } from '@/shared/store/authStore'
 import { Transaction } from '@/shared/types'
 import { formatCurrency } from '@/shared/utils/formatters'
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/shared/utils/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,10 +14,11 @@ import { ToggleGroup } from '@/components/ui/toggle-group'
 import {
   TrendingUp, TrendingDown, Wallet, Upload, Search, RefreshCw,
   ArrowUpDown, ArrowUp, ArrowDown, X, ChevronRight, ChevronDown,
-  CheckCircle2, Clock, Loader2,
+  CheckCircle2, Clock, Loader2, Plus,
 } from 'lucide-react'
 import { ImportStatementModal } from './components/ImportStatementModal'
 import { TransactionExpandedPanel } from './components/TransactionExpandedPanel'
+import { AddTransactionModal } from './components/AddTransactionModal'
 import { useConfigData } from '@/features/config/hooks/useConfig'
 import { useUpdateTransaction } from './hooks/useTransactions'
 
@@ -62,10 +64,10 @@ export function TransactionsPage() {
   const { data: transactions, isLoading, refetch, isFetching } = useTransactions(fy)
 
   const { data: configData } = useConfigData(fy, 'CATEGORY')
-  const categories = useMemo(
-    () => (configData?.items ?? []).filter((i) => i.status === 'Active').map((i) => i.key),
-    [configData],
-  )
+  const categories = useMemo(() => {
+    const configured = (configData?.items ?? []).filter((i) => i.status === 'Active').map((i) => i.key)
+    return configured.length > 0 ? configured : [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]
+  }, [configData])
 
   const [search,         setSearch]         = useState('')
   const [monthFilter,    setMonthFilter]    = useState<string[]>([])
@@ -74,6 +76,7 @@ export function TransactionsPage() {
   const [sortCol,        setSortCol]        = useState<SortCol>('date')
   const [sortDir,        setSortDir]        = useState<SortDir>('desc')
   const [importOpen,     setImportOpen]     = useState(false)
+  const [addOpen,        setAddOpen]        = useState(false)
   const [page,           setPage]           = useState(1)
   const [expandedRowIdx, setExpandedRowIdx] = useState<number | null>(null)
   const PAGE_SIZE = 20
@@ -203,9 +206,14 @@ export function TransactionsPage() {
             <CardTitle className="text-sm font-semibold">Transactions — {fy}</CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               {isWriter && (
-                <Button size="sm" onClick={() => setImportOpen(true)} className="h-8 gap-1.5">
-                  <Upload className="h-3.5 w-3.5" /> Import
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="h-8 gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> New
+                  </Button>
+                  <Button size="sm" onClick={() => setImportOpen(true)} className="h-8 gap-1.5">
+                    <Upload className="h-3.5 w-3.5" /> Import
+                  </Button>
+                </>
               )}
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
@@ -320,6 +328,12 @@ export function TransactionsPage() {
           // eslint-disable-next-line no-console
           console.log(`Imported ${count} transactions`)
         }}
+      />
+
+      <AddTransactionModal
+        open={addOpen}
+        currentFY={fy}
+        onClose={() => setAddOpen(false)}
       />
     </div>
   )

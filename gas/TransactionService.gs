@@ -146,7 +146,7 @@ var TransactionService = (function () {
 
   function _buildRow(C, payload, txnId, source, email) {
     var row = new Array(15).fill('');
-    row[C.DATE]           = payload.date || '';
+    row[C.DATE]           = Utils.parseDate(payload.date) || payload.date || '';
     row[C.PARTICULARS]    = payload.particulars || '';
     row[C.EXPENDITURE]    = payload.expenditure || '';
     row[C.INCOME]         = payload.income || '';
@@ -167,10 +167,32 @@ var TransactionService = (function () {
   function create(fy, payload, email) {
     var sheet = _getSheet(fy);
     if (!sheet) throw new Error('Income_Expense sheet not found for ' + fy);
-    var C = Config.IE_COLS;
+    var C   = Config.IE_COLS;
     var row = _buildRow(C, payload, _generateTxnId(), Config.TXN_SOURCE.MANUAL, email || '');
-    sheet.appendRow(row);
-    return { rowIndex: sheet.getLastRow() };
+
+    // Insert in ascending date order instead of always appending
+    var newDate  = Utils.parseDate(payload.date);
+    var lastRow  = sheet.getLastRow();
+    var insertAt = -1; // -1 = append
+
+    if (newDate && lastRow > 1) {
+      var dateVals = sheet.getRange(2, C.DATE + 1, lastRow - 1, 1).getValues();
+      for (var i = 0; i < dateVals.length; i++) {
+        var existing = Utils.parseDate(dateVals[i][0]);
+        if (existing && existing > newDate) {
+          insertAt = i + 2; // 1-based + 1 for header
+          break;
+        }
+      }
+    }
+
+    if (insertAt === -1) {
+      sheet.appendRow(row);
+      return { rowIndex: sheet.getLastRow() };
+    }
+    sheet.insertRowBefore(insertAt);
+    sheet.getRange(insertAt, 1, 1, row.length).setValues([row]);
+    return { rowIndex: insertAt };
   }
 
   function update(fy, rowIndex, payload) {
