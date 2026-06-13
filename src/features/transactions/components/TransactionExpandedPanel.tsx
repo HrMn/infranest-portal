@@ -13,7 +13,7 @@ const STATUS_OPTIONS = ['Pending Verification', 'Verified']
 interface Props {
   txn: Transaction
   fy: string
-  isWriter: boolean
+  canEdit: boolean
   categories: string[]
   onClose: () => void
 }
@@ -43,7 +43,7 @@ function initForm(txn: Transaction) {
   }
 }
 
-export function TransactionExpandedPanel({ txn, fy, isWriter, categories, onClose }: Props) {
+export function TransactionExpandedPanel({ txn, fy, canEdit, categories, onClose }: Props) {
   const update = useUpdateTransaction(fy)
   const remove = useDeleteTransaction(fy)
 
@@ -229,7 +229,7 @@ export function TransactionExpandedPanel({ txn, fy, isWriter, categories, onClos
         {txn.status && <DetailField label="Status" value={txn.status} />}
         {txn.source && <DetailField label="Source" value={txn.source} />}
       </div>
-      {isWriter && (
+      {canEdit && (
         <div className="flex gap-1 shrink-0 pt-0.5">
           <Button
             variant="ghost"

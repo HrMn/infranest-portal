@@ -4,7 +4,7 @@ import { useTransactions } from './hooks/useTransactions'
 import { useAuthStore } from '@/shared/store/authStore'
 import { Transaction } from '@/shared/types'
 import { formatCurrency } from '@/shared/utils/formatters'
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '@/shared/utils/constants'
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, hasPermission } from '@/shared/utils/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +20,7 @@ import { ImportStatementModal } from './components/ImportStatementModal'
 import { TransactionExpandedPanel } from './components/TransactionExpandedPanel'
 import { AddTransactionModal } from './components/AddTransactionModal'
 import { useConfigData } from '@/features/config/hooks/useConfig'
-import { useUpdateTransaction } from './hooks/useTransactions'
+import { useUpdateTransaction, useVerifyTransaction } from './hooks/useTransactions'
 
 const MONTH_OPTIONS = [
   { value: '04', label: 'April' },    { value: '05', label: 'May' },
@@ -57,9 +57,13 @@ function formatDate(ddMmYyyy: string): string {
 }
 
 export function TransactionsPage() {
-  const fy      = useAppStore((s) => s.selectedFY)
-  const user    = useAuthStore((s) => s.user)
-  const isWriter = user?.role === 'TREASURER'
+  const fy        = useAppStore((s) => s.selectedFY)
+  const user      = useAuthStore((s) => s.user)
+  const privilege = user?.privilege
+  const canCreate = privilege ? hasPermission(privilege, 'create:transaction') : false
+  const canEdit   = privilege ? hasPermission(privilege, 'edit:transaction')   : false
+  const canVerify = privilege ? hasPermission(privilege, 'verify:transaction') : false
+  const canImport = privilege ? hasPermission(privilege, 'import:statement')   : false
 
   const { data: transactions, isLoading, refetch, isFetching } = useTransactions(fy)
 
@@ -205,15 +209,15 @@ export function TransactionsPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-sm font-semibold">Transactions — {fy}</CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
-              {isWriter && (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="h-8 gap-1.5">
-                    <Plus className="h-3.5 w-3.5" /> New
-                  </Button>
-                  <Button size="sm" onClick={() => setImportOpen(true)} className="h-8 gap-1.5">
-                    <Upload className="h-3.5 w-3.5" /> Import
-                  </Button>
-                </>
+              {canCreate && (
+                <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="h-8 gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> New
+                </Button>
+              )}
+              {canImport && (
+                <Button size="sm" onClick={() => setImportOpen(true)} className="h-8 gap-1.5">
+                  <Upload className="h-3.5 w-3.5" /> Import
+                </Button>
               )}
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
@@ -289,7 +293,8 @@ export function TransactionsPage() {
                       key={t.transactionId || t.rowIndex}
                       txn={t}
                       fy={fy}
-                      isWriter={isWriter}
+                      canEdit={canEdit}
+                      canVerify={canVerify}
                       isExpanded={expandedRowIdx === t.rowIndex}
                       onToggle={() => setExpandedRowIdx((prev) => prev === t.rowIndex ? null : t.rowIndex)}
                       categories={categories}
@@ -323,7 +328,6 @@ export function TransactionsPage() {
         fy={fy}
         onClose={() => setImportOpen(false)}
         onImported={(count) => {
-          setImportOpen(false)
           refetch()
           // eslint-disable-next-line no-console
           console.log(`Imported ${count} transactions`)
@@ -369,21 +373,23 @@ function SortableHeader({
 interface RowProps {
   txn: Transaction
   fy: string
-  isWriter: boolean
+  canEdit: boolean
+  canVerify: boolean
   isExpanded: boolean
   onToggle: () => void
   categories: string[]
 }
 
-function TransactionRow({ txn, fy, isWriter, isExpanded, onToggle, categories }: RowProps) {
-  const update   = useUpdateTransaction(fy)
+function TransactionRow({ txn, fy, canEdit, canVerify, isExpanded, onToggle, categories }: RowProps) {
+  const verify   = useVerifyTransaction(fy)
   const isIncome = txn.income && txn.income > 0
   const status   = txn.status === 'Verified' ? 'Verified' : 'Pending Verification'
 
   async function handleStatusToggle(e: React.MouseEvent) {
     e.stopPropagation()
+    if (!canVerify) return
     const newStatus = status === 'Verified' ? 'Pending Verification' : 'Verified'
-    await update.mutateAsync({ rowIndex: txn.rowIndex, status: newStatus })
+    await verify.mutateAsync({ rowIndex: txn.rowIndex, status: newStatus })
   }
 
   return (
@@ -419,11 +425,11 @@ function TransactionRow({ txn, fy, isWriter, isExpanded, onToggle, categories }:
         <td className="px-2 py-2.5 text-center">
           <button
             onClick={handleStatusToggle}
-            disabled={update.isPending}
-            title={status}
+            disabled={!canVerify || verify.isPending}
+            title={canVerify ? status : 'Verification requires Admin or Super Admin privilege'}
             className="rounded p-0.5 hover:bg-muted/60 transition-colors disabled:opacity-40"
           >
-            {update.isPending ? (
+            {verify.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
             ) : status === 'Verified' ? (
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
@@ -444,7 +450,7 @@ function TransactionRow({ txn, fy, isWriter, isExpanded, onToggle, categories }:
             <TransactionExpandedPanel
               txn={txn}
               fy={fy}
-              isWriter={isWriter}
+              canEdit={canEdit}
               categories={categories}
               onClose={onToggle}
             />

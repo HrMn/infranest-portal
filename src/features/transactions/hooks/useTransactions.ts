@@ -57,6 +57,17 @@ export function useCreateTransactionDynamic() {
   })
 }
 
+export function useVerifyTransaction(fy: string) {
+  const qc    = useQueryClient()
+  const token = useAuthStore((s) => s.user?.idToken ?? '')
+
+  return useMutation({
+    mutationFn: (payload: { rowIndex: number; status: string }) =>
+      gasClient.post<{ ok: boolean }>('verifyTransaction', { ...payload, fy }, token),
+    onSuccess: () => qc.invalidateQueries({ queryKey: txnKey(fy) }),
+  })
+}
+
 export function useImportTransactions(fy: string) {
   const qc    = useQueryClient()
   const token = useAuthStore((s) => s.user?.idToken ?? '')
@@ -69,11 +80,11 @@ export function useImportTransactions(fy: string) {
         expenditure: r.expenditure,
         income:      r.income,
         paymentMode: r.paymentMode || 'Online',
-        paymentType: r.income ? 'Credit' : 'Debit',
+        paymentType: r.category || (r.income ? 'Credit' : 'Debit'),
         apartment:   r.apartment || '',
         receiptNo:   '',
-        voucherNo:   '',
-        remarks:     '',
+        voucherNo:   r.refNo    || '',
+        remarks:     r.remarks  || '',
         status:      'Pending Verification',
       }))
       return gasClient.post<{ imported: number }>('importTransactions', { rows: mapped, fy }, token)

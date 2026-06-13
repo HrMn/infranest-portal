@@ -1,4 +1,4 @@
-import { Role, Permission, ROLE_PERMISSIONS } from '@/shared/types'
+import { Privilege, Permission, PRIVILEGE_PERMISSIONS, DisplayRole } from '@/shared/types'
 
 export const APP_NAME = 'Infranest Portal'
 export const ASSOCIATION_NAME = 'Infranest Apartment Association'
@@ -46,16 +46,26 @@ export const EXPENSE_CATEGORIES = [
   'Miscellaneous',
 ] as const
 
-export const ROLE_LABELS: Record<Role, string> = {
-  [Role.TREASURER]: 'Treasurer',
-  [Role.COMMITTEE]: 'Committee Member',
-  [Role.CARETAKER]: 'Caretaker',
-  [Role.OWNER]: 'Flat Owner',
-  [Role.TENANT]: 'Tenant',
+export const DISPLAY_ROLE_LABELS: Record<DisplayRole, string> = {
+  'President':        'President',
+  'Secretary':        'Secretary',
+  'Treasurer':        'Treasurer',
+  'Committee Member': 'Committee Member',
+  'Owner':            'Owner',
+  'Tenant':           'Tenant',
+  'Care Taker':       'Care Taker',
 }
 
-export function hasPermission(role: Role, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false
+export const PRIVILEGE_LABELS: Record<Privilege, string> = {
+  SuperAdmin: 'Super Admin',
+  Admin:      'Admin',
+  CT:         'Care Taker',
+  User:       'User',
+  Guest:      'Guest',
+}
+
+export function hasPermission(privilege: Privilege, permission: Permission): boolean {
+  return PRIVILEGE_PERMISSIONS[privilege]?.includes(permission) ?? false
 }
 
 export const CHART_COLORS = {

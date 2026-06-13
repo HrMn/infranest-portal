@@ -164,35 +164,35 @@ var TransactionService = (function () {
     return row;
   }
 
+  // Shared helper: insert a pre-built row in ascending date order.
+  // Re-reads the sheet on each call so it stays correct across multiple inserts.
+  function _insertOrdered(sheet, C, builtRow, payloadDate) {
+    var newDate  = Utils.parseDate(payloadDate);
+    var lastRow  = sheet.getLastRow();
+    var insertAt = -1;
+    if (newDate && lastRow > 1) {
+      var dateVals = sheet.getRange(2, C.DATE + 1, lastRow - 1, 1).getValues();
+      for (var i = 0; i < dateVals.length; i++) {
+        var existing = Utils.parseDate(dateVals[i][0]);
+        if (existing && existing > newDate) { insertAt = i + 2; break; }
+      }
+    }
+    if (insertAt === -1) {
+      sheet.appendRow(builtRow);
+      return sheet.getLastRow();
+    }
+    sheet.insertRowBefore(insertAt);
+    sheet.getRange(insertAt, 1, 1, builtRow.length).setValues([builtRow]);
+    return insertAt;
+  }
+
   function create(fy, payload, email) {
     var sheet = _getSheet(fy);
     if (!sheet) throw new Error('Income_Expense sheet not found for ' + fy);
     var C   = Config.IE_COLS;
     var row = _buildRow(C, payload, _generateTxnId(), Config.TXN_SOURCE.MANUAL, email || '');
-
-    // Insert in ascending date order instead of always appending
-    var newDate  = Utils.parseDate(payload.date);
-    var lastRow  = sheet.getLastRow();
-    var insertAt = -1; // -1 = append
-
-    if (newDate && lastRow > 1) {
-      var dateVals = sheet.getRange(2, C.DATE + 1, lastRow - 1, 1).getValues();
-      for (var i = 0; i < dateVals.length; i++) {
-        var existing = Utils.parseDate(dateVals[i][0]);
-        if (existing && existing > newDate) {
-          insertAt = i + 2; // 1-based + 1 for header
-          break;
-        }
-      }
-    }
-
-    if (insertAt === -1) {
-      sheet.appendRow(row);
-      return { rowIndex: sheet.getLastRow() };
-    }
-    sheet.insertRowBefore(insertAt);
-    sheet.getRange(insertAt, 1, 1, row.length).setValues([row]);
-    return { rowIndex: insertAt };
+    var rowIndex = _insertOrdered(sheet, C, row, payload.date);
+    return { rowIndex: rowIndex };
   }
 
   function update(fy, rowIndex, payload) {
@@ -224,16 +224,25 @@ var TransactionService = (function () {
   }
 
   // Bulk import — called by importTransactions action.
-  // rows: array of payload objects (same shape as create payload).
-  // Returns { imported: N }.
+  // Rows are sorted by date ascending before insertion so each _insertOrdered
+  // call re-reads the sheet in a predictable state.
   function bulkCreate(fy, rows, email) {
     var sheet = _getSheet(fy);
     if (!sheet) throw new Error('Income_Expense sheet not found for ' + fy);
     var C = Config.IE_COLS;
+
+    var sorted = rows.slice().sort(function (a, b) {
+      var da = Utils.parseDate(a.date), db = Utils.parseDate(b.date);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+
     var imported = 0;
-    for (var i = 0; i < rows.length; i++) {
-      var row = _buildRow(C, rows[i], _generateTxnId(), Config.TXN_SOURCE.IMPORT, email);
-      sheet.appendRow(row);
+    for (var i = 0; i < sorted.length; i++) {
+      var builtRow = _buildRow(C, sorted[i], _generateTxnId(), Config.TXN_SOURCE.IMPORT, email);
+      _insertOrdered(sheet, C, builtRow, sorted[i].date);
       imported++;
     }
     return { imported: imported };

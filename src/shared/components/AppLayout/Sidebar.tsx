@@ -26,7 +26,7 @@ export function Sidebar() {
   const user = useAuthStore((s) => s.user)
 
   const visibleItems = NAV_ITEMS.filter((item) =>
-    !item.permission || (user && hasPermission(user.role, item.permission as never)),
+    !item.permission || (user && hasPermission(user.privilege, item.permission as never)),
   )
 
   function isActive(key: string) {

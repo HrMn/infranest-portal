@@ -84,109 +84,121 @@ function _route(action, e, principal) {
   var p  = e.parameter  || {};
   var fy = p.fy || Config.DEFAULT_FY;
 
-  var WRITE_ROLES = ['TREASURER'];
-  var READ_ROLES  = ['TREASURER', 'COMMITTEE', 'CARETAKER'];
+  // Privilege tiers (ordered by access level)
+  var SUPER_ADMIN  = ['SuperAdmin'];
+  var VERIFY_PRIVS = ['SuperAdmin', 'Admin'];          // can verify transactions
+  var CREATE_PRIVS = ['SuperAdmin', 'CT'];              // can create/import transactions
+  var READ_PRIVS   = ['SuperAdmin', 'Admin', 'CT'];    // can read financial data
+  var MANAGE_PRIVS = ['SuperAdmin'];                    // manage users and config
 
   switch (action) {
 
     // ---- User / Auth ----
     case 'getUserRole':
       return ResponseHelper.success({
-        email: principal.email,
-        role:  principal.role,
-        name:  principal.name,
+        email:       principal.email,
+        displayRole: principal.displayRole,
+        privilege:   principal.privilege,
+        name:        principal.name,
       });
 
     case 'getUsers':
-      AuthGuard.requireRole(principal, ['TREASURER']);
+      AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       return ResponseHelper.success(UserService.getAllUsers());
 
     case 'upsertUser': {
-      AuthGuard.requireRole(principal, ['TREASURER']);
+      AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       var body = JSON.parse(e.postData.contents || '{}');
-      UserService.upsertUser(body.email, body.role, body.name);
+      UserService.upsertUser(body.email, body.displayRole, body.name, body.privilege);
       return ResponseHelper.success({ ok: true });
     }
 
     // ---- Dashboard ----
     case 'getDashboardSummary':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(
         ReportService.getDashboardSummary(fy, p.month || null)
       );
 
     // ---- MMC ----
     case 'getMMCStatus':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(MMCService.getStatus(fy));
 
     // ---- Residents ----
     case 'getResidents': {
-      AuthGuard.requireRole(principal, READ_ROLES);
-      var includePII = principal.role === 'TREASURER';
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      var includePII = principal.privilege === 'SuperAdmin';
       return ResponseHelper.success(ResidentService.getAll(fy, includePII));
     }
 
     // ---- Reports ----
     case 'getMonthlyReport':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
       return ResponseHelper.success(ReportService.getMonthlyReport(fy));
 
     case 'getIncomeBreakdown':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
       return ResponseHelper.success(ReportService.getIncomeBreakdown(fy));
 
     case 'getExpenseBreakdown':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
       return ResponseHelper.success(ReportService.getExpenseBreakdown(fy));
 
     // ---- Transactions ----
     case 'getTransactions':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(TransactionService.getAll(fy));
 
     case 'getTransactionSummary':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(TransactionService.getSummary(fy, p.month || null));
 
     case 'getBankSummary':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(TransactionService.getBankSummary(fy, p.month || null));
 
     case 'getCashSummary':
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(TransactionService.getCashSummary(fy, p.month || null));
 
     case 'createTransaction': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, CREATE_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');
       var result = TransactionService.create(fy, payload, principal.email);
       return ResponseHelper.success(result);
     }
 
     case 'updateTransaction': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, SUPER_ADMIN);
       var payload = JSON.parse(e.postData.contents || '{}');
       TransactionService.update(fy, payload.rowIndex, payload);
       return ResponseHelper.success({ ok: true });
     }
 
+    case 'verifyTransaction': {
+      AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
+      var payload = JSON.parse(e.postData.contents || '{}');
+      TransactionService.update(fy, payload.rowIndex, { status: payload.status });
+      return ResponseHelper.success({ ok: true });
+    }
+
     case 'deleteTransaction': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, SUPER_ADMIN);
       var payload = JSON.parse(e.postData.contents || '{}');
       TransactionService.remove(fy, payload.rowIndex);
       return ResponseHelper.success({ ok: true });
     }
 
     case 'importTransactions': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, SUPER_ADMIN);
       var payload = JSON.parse(e.postData.contents || '{}');
       var result = TransactionService.bulkCreate(fy, payload.rows || [], principal.email);
       return ResponseHelper.success(result);
     }
 
     case 'getAptMapping': {
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       var sheet = Config.getFinancialsSheet(fy, Config.TABS.MAPPING_DATA);
       if (!sheet) return ResponseHelper.success({ mappings: [] });
       var data = sheet.getDataRange().getValues();
@@ -203,7 +215,7 @@ function _route(action, e, principal) {
 
     // ---- Config / Master Data ----
     case 'getConfigData': {
-      AuthGuard.requireRole(principal, READ_ROLES);
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
       var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.success({ items: [] });
       var data = sheet.getDataRange().getValues();
@@ -221,7 +233,7 @@ function _route(action, e, principal) {
     }
 
     case 'upsertConfigItem': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');
       var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');
@@ -234,7 +246,7 @@ function _route(action, e, principal) {
     }
 
     case 'deleteConfigItem': {
-      AuthGuard.requireRole(principal, WRITE_ROLES);
+      AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');
       var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');

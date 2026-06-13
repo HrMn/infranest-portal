@@ -1,17 +1,41 @@
-export enum Role {
-  TREASURER = 'TREASURER',
-  COMMITTEE = 'COMMITTEE',
-  CARETAKER = 'CARETAKER',
-  OWNER = 'OWNER',
-  TENANT = 'TENANT',
+export type DisplayRole =
+  | 'President'
+  | 'Secretary'
+  | 'Treasurer'
+  | 'Committee Member'
+  | 'Owner'
+  | 'Tenant'
+  | 'Care Taker'
+
+export type Privilege = 'SuperAdmin' | 'Admin' | 'CT' | 'User' | 'Guest'
+
+export const DISPLAY_ROLES: DisplayRole[] = [
+  'President',
+  'Secretary',
+  'Treasurer',
+  'Committee Member',
+  'Owner',
+  'Tenant',
+  'Care Taker',
+]
+
+export const DEFAULT_PRIVILEGE: Record<DisplayRole, Privilege> = {
+  'President':        'Admin',
+  'Secretary':        'Admin',
+  'Treasurer':        'SuperAdmin',
+  'Committee Member': 'Admin',
+  'Owner':            'User',
+  'Tenant':           'Guest',
+  'Care Taker':       'CT',
 }
 
 export interface AuthUser {
-  email: string
-  name: string
-  picture: string
-  role: Role
-  idToken: string
+  email:       string
+  name:        string
+  picture:     string
+  idToken:     string
+  displayRole: DisplayRole
+  privilege:   Privilege
 }
 
 export type Permission =
@@ -23,34 +47,27 @@ export type Permission =
   | 'create:transaction'
   | 'edit:transaction'
   | 'delete:transaction'
+  | 'verify:transaction'
   | 'import:statement'
   | 'manage:users'
   | 'view:settings'
   | 'manage:config'
 
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  [Role.TREASURER]: [
-    'view:dashboard',
-    'view:reports',
-    'view:residents',
-    'view:mmc',
-    'view:transactions',
-    'create:transaction',
-    'edit:transaction',
-    'delete:transaction',
-    'import:statement',
-    'manage:users',
-    'view:settings',
-    'manage:config',
+export const PRIVILEGE_PERMISSIONS: Record<Privilege, Permission[]> = {
+  SuperAdmin: [
+    'view:dashboard', 'view:reports', 'view:residents', 'view:mmc',
+    'view:transactions', 'create:transaction', 'edit:transaction',
+    'delete:transaction', 'verify:transaction', 'import:statement',
+    'manage:users', 'view:settings', 'manage:config',
   ],
-  [Role.COMMITTEE]: [
-    'view:dashboard',
-    'view:reports',
-    'view:residents',
-    'view:mmc',
-    'view:transactions',
+  Admin: [
+    'view:dashboard', 'view:reports', 'view:residents', 'view:mmc',
+    'view:transactions', 'verify:transaction',
   ],
-  [Role.CARETAKER]: ['view:dashboard', 'view:residents'],
-  [Role.OWNER]: [],
-  [Role.TENANT]: [],
+  CT: [
+    'view:dashboard', 'view:residents',
+    'view:transactions', 'create:transaction',
+  ],
+  User:  ['view:dashboard'],
+  Guest: ['view:dashboard'],
 }

@@ -15,7 +15,7 @@ export function ProtectedRoute({ children, permission }: Props) {
     return <Navigate to="/login" replace />
   }
 
-  if (permission && !hasPermission(user.role, permission)) {
+  if (permission && !hasPermission(user.privilege, permission)) {
     return <Navigate to="/" replace />
   }
 

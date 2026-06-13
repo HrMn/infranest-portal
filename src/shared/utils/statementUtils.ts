@@ -37,3 +37,51 @@ export const ALL_CATEGORIES: string[] = [
   ...INCOME_CATEGORIES,
   ...EXPENSE_CATEGORIES,
 ]
+
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+function monthLabel(ddMmYyyy: string): string {
+  const m = ddMmYyyy.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (!m) return ''
+  const mon = MONTH_LABELS[parseInt(m[2]) - 1]
+  return mon ? `${mon}-${m[3]}` : ''
+}
+
+const INCOME_TYPE_MAP: Array<{ re: RegExp; prefix: string; category: string }> = [
+  { re: /\bmmc\b|maintenance.*charge|flat.*collection/i, prefix: 'MMC',    category: 'MMC'        },
+  { re: /water recovery|water charge|\bwater\b/i,         prefix: 'Water',  category: 'WaterUsage' },
+  { re: /gas recovery|gas charge/i,                        prefix: 'Gas',    category: 'GasUsage'   },
+  { re: /\bcorpus\b/i,                                     prefix: 'Corpus', category: 'CorpusFund' },
+]
+
+/** Resolves both formatted particulars and the matched category for a statement row.
+ *  Returns the original values unchanged for expenses and unrecognised income. */
+export function resolveIncomeInfo(
+  description:      string,
+  existingCategory: string,
+  apartment:        string,
+  date:             string,
+  isIncome:         boolean,
+): { particulars: string; category: string } {
+  if (!isIncome) return { particulars: description, category: existingCategory }
+  const apt   = apartment || '?'
+  const month = monthLabel(date)
+  const haystack = `${existingCategory} ${description}`
+  for (const { re, prefix, category } of INCOME_TYPE_MAP) {
+    if (re.test(haystack)) {
+      const particulars = month ? `${prefix} - ${apt} - ${month}` : `${prefix} - ${apt}`
+      return { particulars, category }
+    }
+  }
+  return { particulars: description, category: existingCategory }
+}
+
+export function generateParticulars(
+  description: string,
+  category:    string,
+  apartment:   string,
+  date:        string,
+  isIncome:    boolean,
+): string {
+  return resolveIncomeInfo(description, category, apartment, date, isIncome).particulars
+}

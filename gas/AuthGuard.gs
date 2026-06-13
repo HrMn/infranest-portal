@@ -1,5 +1,5 @@
 // ============================================================
-// AuthGuard.gs — Token verification and role enforcement
+// AuthGuard.gs — Token verification and privilege enforcement
 // ============================================================
 
 var AuthGuard = (function () {
@@ -70,7 +70,7 @@ var AuthGuard = (function () {
     }
   }
 
-  // Middleware: verify token + fetch role. Returns { email, role, name } or throws.
+  // Middleware: verify token + fetch role. Returns { email, displayRole, privilege, name } or throws.
   function authenticate(request) {
     // GET: auth is in query param ?authorization=Bearer <token>
     var authHeader = (request.parameter && request.parameter.authorization)
@@ -99,19 +99,27 @@ var AuthGuard = (function () {
       throw { code: 'FORBIDDEN', message: 'User ' + email + ' not found in UserRoles or is inactive. Contact the Treasurer.' };
     }
 
-    return { email: email, role: roleInfo.role, name: roleInfo.name };
+    return {
+      email:       email,
+      displayRole: roleInfo.displayRole,
+      privilege:   roleInfo.privilege,
+      name:        roleInfo.name,
+    };
   }
 
-  // Check that the authenticated user has one of the allowed roles
-  function requireRole(principal, allowedRoles) {
-    if (allowedRoles.indexOf(principal.role) === -1) {
-      throw { code: 'FORBIDDEN', message: 'Your role (' + principal.role + ') does not have permission for this action.' };
+  // Check that the authenticated user has one of the allowed privileges
+  function requirePrivilege(principal, allowedPrivileges) {
+    if (allowedPrivileges.indexOf(principal.privilege) === -1) {
+      throw {
+        code: 'FORBIDDEN',
+        message: 'Your privilege (' + principal.privilege + ') does not have permission for this action.',
+      };
     }
   }
 
   return {
-    authenticate: authenticate,
-    requireRole: requireRole,
+    authenticate:     authenticate,
+    requirePrivilege: requirePrivilege,
   };
 
 })();

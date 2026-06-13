@@ -46,7 +46,7 @@ export function useUpsertUser() {
   const qc    = useQueryClient()
   const token = useAuthStore((s) => s.user?.idToken ?? '')
   return useMutation({
-    mutationFn: (u: { email: string; role: string; name: string }) =>
+    mutationFn: (u: { email: string; displayRole: string; privilege: string; name: string }) =>
       gasClient.post<{ ok: boolean }>('upsertUser', u, token),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['appUsers'] }),
   })

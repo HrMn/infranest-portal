@@ -122,13 +122,15 @@ var Config = (function () {
 
   // ---------------------------------------------------------------------------
   // UserRoles column indices (0-based)
+  // Sheet layout: A:EMAIL | B:DISPLAY_ROLE | C:PRIVILEGE | D:NAME | E:ACTIVE | F:LAST_LOGIN
   // ---------------------------------------------------------------------------
   var USER_COLS = {
-    EMAIL:      0,
-    ROLE:       1,
-    NAME:       2,
-    ACTIVE:     3,
-    LAST_LOGIN: 4,
+    EMAIL:        0,
+    DISPLAY_ROLE: 1,
+    PRIVILEGE:    2,
+    NAME:         3,
+    ACTIVE:       4,
+    LAST_LOGIN:   5,
   };
 
   // ---------------------------------------------------------------------------

@@ -6,9 +6,10 @@ export interface ConfigItem {
 }
 
 export interface AppUser {
-  email:     string
-  role:      string
-  name:      string
-  active:    string
-  lastLogin: string
+  email:       string
+  displayRole: string
+  privilege:   string
+  name:        string
+  active:      string
+  lastLogin:   string
 }

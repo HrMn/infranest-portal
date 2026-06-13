@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect } from 'react'
-import { UploadCloud, AlertTriangle, X, ChevronRight } from 'lucide-react'
+import { useState, useCallback, useEffect, useMemo, memo } from 'react'
+import { UploadCloud, AlertTriangle, X, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -12,9 +11,10 @@ import type { ColumnMap } from '@/shared/utils/csvParser'
 import { parsePdfFile, BANK_FORMAT_OPTIONS } from '@/shared/utils/pdfParser'
 import type { BankFormat } from '@/shared/utils/pdfParser'
 import { parseExcelFile } from '@/shared/utils/excelParser'
-import { ALL_CATEGORIES } from '@/shared/utils/statementUtils'
+import { ALL_CATEGORIES, resolveIncomeInfo } from '@/shared/utils/statementUtils'
 import { formatCurrency } from '@/shared/utils/formatters'
 import { matchApartment } from '@/shared/utils/aptMapper'
+import { useConfigData } from '@/features/config/hooks/useConfig'
 import { useImportTransactions } from '../hooks/useTransactions'
 import { useAptMapping } from '../hooks/useAptMapping'
 
@@ -28,8 +28,7 @@ interface Props {
 type Step     = 'upload' | 'map' | 'preview'
 type FileType = 'csv' | 'excel' | 'pdf'
 
-const PAYMENT_MODES = ['Online', 'Cash', 'UPI', 'NEFT', 'RTGS', 'Cheque']
-const MONTH_NAMES   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function detectFileType(filename: string): FileType {
   const lower = filename.toLowerCase()
@@ -75,6 +74,125 @@ function applyFyFilter(rows: ParsedStatementRow[], fy: string): ParsedStatementR
   })
 }
 
+function applyRemarks(rows: ParsedStatementRow[]): ParsedStatementRow[] {
+  return rows.map((r) => ({
+    ...r,
+    remarks: r.remarks || r.particulars,
+    refNo:   r.refNo   ?? '',
+  }))
+}
+
+function applyParticularsGeneration(rows: ParsedStatementRow[]): ParsedStatementRow[] {
+  return rows.map((r) => {
+    const original = r.remarks || r.particulars
+    const isIncome = !!(r.income && r.income > 0)
+    const { particulars, category } = resolveIncomeInfo(original, r.category, r.apartment, r.date, isIncome)
+    const wasFormatted = particulars !== original
+    return { ...r, particulars, category, remarks: wasFormatted ? original : '' }
+  })
+}
+
+// ─── Memoised row ─────────────────────────────────────────────────────────────
+
+interface RowProps {
+  row:                ParsedStatementRow
+  idx:                number
+  imported:           boolean
+  categoryOpts:       string[]
+  onToggle:           (idx: number, checked: boolean) => void
+  onUpdate:           (idx: number, field: keyof ParsedStatementRow, value: unknown) => void
+  onUpdateParticulars:(idx: number, value: string) => void
+}
+
+const PreviewRow = memo(function PreviewRow({
+  row: r, idx, imported, categoryOpts, onToggle, onUpdate, onUpdateParticulars,
+}: RowProps) {
+  return (
+    <tr
+      className={cn(
+        'transition-colors',
+        imported                    ? 'bg-emerald-50/60'  : '',
+        !imported && r.outOfRange   ? 'bg-amber-50/50'    : '',
+        !imported && !r.include && !r.outOfRange ? 'opacity-40' : '',
+      )}
+    >
+      <td className="px-2 py-1.5 text-center">
+        {imported
+          ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mx-auto" />
+          : <Checkbox
+              checked={r.include}
+              onCheckedChange={(c) => onToggle(idx, !!c)}
+              className="h-3.5 w-3.5"
+            />
+        }
+      </td>
+      <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
+        {r.outOfRange && <AlertTriangle className="inline h-3 w-3 text-amber-500 mr-1" />}
+        {formatDateDisplay(r.date)}
+      </td>
+      <td className="px-2 py-1.5">
+        <input
+          className="w-full bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1"
+          value={r.particulars}
+          onChange={(e) => onUpdateParticulars(idx, e.target.value)}
+        />
+      </td>
+      <td className="px-2 py-1.5">
+        <input
+          className="w-12 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1 text-center"
+          value={r.apartment}
+          onChange={(e) => onUpdate(idx, 'apartment', e.target.value)}
+          placeholder="—"
+        />
+      </td>
+      <td className="px-2 py-1.5 text-right">
+        <input
+          type="number"
+          className="w-24 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 text-right text-red-600"
+          value={r.expenditure ?? ''}
+          onChange={(e) => onUpdate(idx, 'expenditure', e.target.value ? parseFloat(e.target.value) : null)}
+        />
+      </td>
+      <td className="px-2 py-1.5 text-right">
+        <input
+          type="number"
+          className="w-24 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 text-right text-emerald-600"
+          value={r.income ?? ''}
+          onChange={(e) => onUpdate(idx, 'income', e.target.value ? parseFloat(e.target.value) : null)}
+        />
+      </td>
+      <td className="px-2 py-1.5">
+        <Select value={r.category} onValueChange={(v) => onUpdate(idx, 'category', v)}>
+          <SelectTrigger className="h-6 text-xs border-0 bg-transparent px-1 focus:bg-muted/50">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {categoryOpts.map((c) => (
+              <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </td>
+      <td className="px-2 py-1.5">
+        <input
+          className="w-full bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1 text-muted-foreground"
+          value={r.remarks ?? ''}
+          onChange={(e) => onUpdate(idx, 'remarks', e.target.value)}
+          placeholder="—"
+        />
+      </td>
+      <td className="px-2 py-1.5">
+        <input
+          className="w-full bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1"
+          value={r.refNo ?? ''}
+          onChange={(e) => onUpdate(idx, 'refNo', e.target.value)}
+          placeholder="—"
+        />
+      </td>
+    </tr>
+  )
+})
+
 // ─── Steps indicator ─────────────────────────────────────────────────────────
 
 function StepsBar({ current, steps }: { current: number; steps: string[] }) {
@@ -100,7 +218,7 @@ function StepsBar({ current, steps }: { current: number; steps: string[] }) {
   )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
   const [step,        setStep]        = useState<Step>('upload')
@@ -112,24 +230,48 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
   const [csvHeaders,  setCsvHeaders]  = useState<string[]>([])
   const [colMap,      setColMap]      = useState<ColumnMap>({ date: '', particulars: '', debit: '', credit: '', balance: '' })
   const [rawRows,     setRawRows]     = useState<Record<string, unknown>[]>([])
-  const [previewRows, setPreviewRows] = useState<ParsedStatementRow[]>([])
-  const [dragging,    setDragging]    = useState(false)
+  const [previewRows,     setPreviewRows]     = useState<ParsedStatementRow[]>([])
+  const [dragging,        setDragging]        = useState(false)
+  const [importedSet,     setImportedSet]     = useState<Set<number>>(new Set())
+  const [lastImportCount, setLastImportCount] = useState(0)
 
   const importMut = useImportTransactions(fy)
   const { data: aptMappingData } = useAptMapping(fy, open)
   const aptMappings = aptMappingData?.mappings ?? []
 
+  const { data: configData } = useConfigData(fy, 'CATEGORY')
+  const categoryOpts = useMemo(() => {
+    const configured = (configData?.items ?? []).filter((i) => i.status === 'Active').map((i) => i.key)
+    return configured.length > 0 ? configured : ALL_CATEGORIES
+  }, [configData])
+
   useEffect(() => {
     if (!aptMappings.length || !previewRows.length) return
     setPreviewRows((prev) =>
-      prev.map((r) => r.apartment ? r : { ...r, apartment: matchApartment(r.particulars, aptMappings) }),
+      prev.map((r) => {
+        if (r.apartment) return r
+        const apt = matchApartment(r.remarks || r.particulars, aptMappings)
+        if (!apt) return r
+        const original = r.remarks || r.particulars
+        const isIncome = !!(r.income && r.income > 0)
+        const { particulars, category } = resolveIncomeInfo(original, r.category, apt, r.date, isIncome)
+        const wasFormatted = particulars !== original
+        return { ...r, apartment: apt, particulars, category, remarks: wasFormatted ? original : '' }
+      }),
     )
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aptMappings])
 
   function applyApartments(rows: ParsedStatementRow[]): ParsedStatementRow[] {
     if (!aptMappings.length) return rows
-    return rows.map((r) => ({ ...r, apartment: r.apartment || matchApartment(r.particulars, aptMappings) }))
+    return rows.map((r) => ({
+      ...r,
+      apartment: r.apartment || matchApartment(r.remarks ?? r.particulars, aptMappings),
+    }))
+  }
+
+  function buildPreview(rows: ParsedStatementRow[]): ParsedStatementRow[] {
+    return applyParticularsGeneration(applyApartments(applyFyFilter(applyRemarks(rows), fy)))
   }
 
   function resetState() {
@@ -137,38 +279,32 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
     setParseError(''); setCsvHeaders([])
     setColMap({ date: '', particulars: '', debit: '', credit: '', balance: '' })
     setRawRows([]); setPreviewRows([])
+    setImportedSet(new Set()); setLastImportCount(0)
   }
 
   function handleClose() { resetState(); onClose() }
 
   function pickFile(file: File) {
-    setFileList([file])
-    setParseError('')
-    setFileType(detectFileType(file.name))
+    setFileList([file]); setParseError(''); setFileType(detectFileType(file.name))
   }
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) pickFile(file)
+    e.preventDefault(); setDragging(false)
+    const file = e.dataTransfer.files[0]; if (file) pickFile(file)
   }, [])
 
   async function handleParse() {
-    const file = fileList[0]
-    if (!file) return
+    const file = fileList[0]; if (!file) return
     setParsing(true); setParseError('')
     try {
       if (fileType === 'pdf') {
         const { rows, parseError: err } = await parsePdfFile(file, bankFormat)
         if (err) { setParseError(err); return }
-        setPreviewRows(applyApartments(applyFyFilter(rows, fy)))
-        setStep('preview')
+        setPreviewRows(buildPreview(rows)); setStep('preview')
       } else if (fileType === 'excel') {
         const { rows, parseError: err } = await parseExcelFile(file)
         if (err) { setParseError(err); return }
-        setPreviewRows(applyApartments(applyFyFilter(rows, fy)))
-        setStep('preview')
+        setPreviewRows(buildPreview(rows)); setStep('preview')
       } else {
         const { headers, suggestedMap, rows } = await parseCsvFile(file)
         setCsvHeaders(headers); setColMap(suggestedMap)
@@ -178,12 +314,10 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
             header: true, skipEmptyLines: true,
             transformHeader: (h) => h.trim(),
             complete: (r) => resolve(r.data as Record<string, unknown>[]),
-            error: (e) => reject(new Error(e.message)),
+            error:    (e) => reject(new Error(e.message)),
           })
         })
-        setRawRows(result)
-        setPreviewRows(applyApartments(applyFyFilter(rows, fy)))
-        setStep('map')
+        setRawRows(result); setPreviewRows(buildPreview(rows)); setStep('map')
       }
     } catch (err) {
       setParseError((err as Error).message)
@@ -193,24 +327,32 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
   }
 
   function handleApplyMap() {
-    const rows = applyColumnMap(rawRows, colMap)
-    setPreviewRows(applyApartments(applyFyFilter(rows, fy)))
-    setStep('preview')
+    setPreviewRows(buildPreview(applyColumnMap(rawRows, colMap))); setStep('preview')
   }
 
-  function toggleRow(idx: number, checked: boolean) {
+  // Stable callbacks — only the changed row re-renders thanks to React.memo on PreviewRow
+  const toggleRow = useCallback((idx: number, checked: boolean) => {
     setPreviewRows((prev) => prev.map((r, i) => (i === idx ? { ...r, include: checked } : r)))
-  }
+  }, [])
 
-  function updateRow(idx: number, field: keyof ParsedStatementRow, value: unknown) {
+  const updateRow = useCallback((idx: number, field: keyof ParsedStatementRow, value: unknown) => {
     setPreviewRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)))
-  }
+  }, [])
+
+  const updateParticulars = useCallback((idx: number, value: string) => {
+    setPreviewRows((prev) => prev.map((r, i) => (i === idx ? { ...r, particulars: value } : r)))
+  }, [])
 
   async function handleImport() {
-    const selected = previewRows.filter((r) => r.include)
-    if (!selected.length) return
+    const selectedIndices = previewRows.reduce<number[]>((acc, r, i) => (r.include ? [...acc, i] : acc), [])
+    if (!selectedIndices.length) return
+    const selected = selectedIndices.map((i) => previewRows[i])
     try {
       const result = await importMut.mutateAsync(selected)
+      // Mark imported rows and uncheck them so they can't be re-imported
+      setImportedSet((prev) => new Set([...prev, ...selectedIndices]))
+      setPreviewRows((prev) => prev.map((r, i) => selectedIndices.includes(i) ? { ...r, include: false } : r))
+      setLastImportCount(result.imported)
       onImported(result.imported)
     } catch {
       setParseError('Import failed. Please try again.')
@@ -219,17 +361,21 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
 
   const selectedCount   = previewRows.filter((r) => r.include).length
   const outOfRangeCount = previewRows.filter((r) => r.outOfRange).length
+  const allSelected     = previewRows.length > 0 && previewRows.every((r) => r.include)
+  const someSelected    = !allSelected && previewRows.some((r) => r.include)
   const selectedIncome  = previewRows.filter((r) => r.include && r.income).reduce((s, r) => s + (r.income ?? 0), 0)
   const selectedExpense = previewRows.filter((r) => r.include && r.expenditure).reduce((s, r) => s + (r.expenditure ?? 0), 0)
 
-  const steps    = ['Upload', fileType === 'csv' ? 'Map Columns' : 'Parsed', 'Preview']
-  const stepIdx  = step === 'upload' ? 0 : step === 'map' ? 1 : 2
+  function toggleAll(checked: boolean) {
+    setPreviewRows((prev) => prev.map((r) => ({ ...r, include: checked })))
+  }
 
-  const headerOptions = ['', ...csvHeaders]
+  const steps   = ['Upload', fileType === 'csv' ? 'Map Columns' : 'Parsed', 'Preview']
+  const stepIdx = step === 'upload' ? 0 : step === 'map' ? 1 : 2
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className={cn('max-h-[90vh] flex flex-col', step === 'preview' ? 'max-w-5xl' : 'max-w-lg')}>
+      <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Import Bank Statement</DialogTitle>
         </DialogHeader>
@@ -247,7 +393,7 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
 
           {/* ── Step 1: Upload ── */}
           {step === 'upload' && (
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-lg mx-auto">
               <div
                 className={cn(
                   'border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors',
@@ -259,9 +405,7 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
                 onClick={() => document.getElementById('file-input')?.click()}
               >
                 <input
-                  id="file-input"
-                  type="file"
-                  className="hidden"
+                  id="file-input" type="file" className="hidden"
                   accept=".csv,.xls,.xlsx,.pdf"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f) }}
                 />
@@ -304,7 +448,7 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
 
           {/* ── Step 2: Map Columns (CSV only) ── */}
           {step === 'map' && (
-            <div className="space-y-3">
+            <div className="space-y-3 max-w-lg mx-auto">
               <p className="text-sm text-muted-foreground">{csvHeaders.length} columns detected. Confirm the mapping below.</p>
               {([
                 ['date',        'Date *'],
@@ -318,7 +462,7 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
                   <Select value={colMap[field]} onValueChange={(v) => setColMap((m) => ({ ...m, [field]: v }))}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="— not mapped —" /></SelectTrigger>
                     <SelectContent>
-                      {headerOptions.map((h) => (
+                      {['', ...csvHeaders].map((h) => (
                         <SelectItem key={h} value={h} className="text-xs">{h || '— not mapped —'}</SelectItem>
                       ))}
                     </SelectContent>
@@ -341,6 +485,13 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
                 </div>
               )}
 
+              {lastImportCount > 0 && (
+                <div className="flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <span>{lastImportCount} transaction{lastImportCount !== 1 ? 's' : ''} imported successfully. Select more rows to continue importing.</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span><strong className="text-foreground">{selectedCount}</strong> of {previewRows.length} selected</span>
                 <span>Income: <strong className="text-emerald-600">{formatCurrency(selectedIncome)}</strong></span>
@@ -349,95 +500,37 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
 
               <div className="overflow-auto max-h-[50vh] rounded-md border">
                 <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-muted/80">
+                  <thead className="sticky top-0 z-10 bg-muted">
                     <tr className="border-b">
-                      <th className="w-8 px-2 py-2"></th>
+                      <th className="w-8 px-2 py-2 text-center">
+                        <Checkbox
+                          checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                          onCheckedChange={(c) => toggleAll(!!c)}
+                          className="h-3.5 w-3.5"
+                        />
+                      </th>
                       <th className="px-2 py-2 text-left font-medium text-muted-foreground w-24">Date</th>
-                      <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[200px]">Particulars</th>
-                      <th className="px-2 py-2 text-left font-medium text-muted-foreground w-16">Apt</th>
+                      <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[160px]">Particulars</th>
+                      <th className="px-2 py-2 text-left font-medium text-muted-foreground w-14">Apt</th>
                       <th className="px-2 py-2 text-right font-medium text-muted-foreground w-24">Expense</th>
                       <th className="px-2 py-2 text-right font-medium text-muted-foreground w-24">Income</th>
                       <th className="px-2 py-2 text-left font-medium text-muted-foreground w-36">Category</th>
-                      <th className="px-2 py-2 text-left font-medium text-muted-foreground w-24">Mode</th>
+                      <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[180px]">Remarks</th>
+                      <th className="px-2 py-2 text-left font-medium text-muted-foreground w-28">Ref No.</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {previewRows.map((r, i) => (
-                      <tr
+                      <PreviewRow
                         key={i}
-                        className={cn(
-                          'transition-colors',
-                          r.outOfRange ? 'bg-amber-50/50' : '',
-                          !r.include && !r.outOfRange ? 'opacity-40' : '',
-                        )}
-                      >
-                        <td className="px-2 py-1.5 text-center">
-                          <Checkbox
-                            checked={r.include}
-                            onCheckedChange={(c) => toggleRow(i, !!c)}
-                            className="h-3.5 w-3.5"
-                          />
-                        </td>
-                        <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
-                          {r.outOfRange && <AlertTriangle className="inline h-3 w-3 text-amber-500 mr-1" />}
-                          {formatDateDisplay(r.date)}
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <input
-                            className="w-full bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1"
-                            value={r.particulars}
-                            onChange={(e) => updateRow(i, 'particulars', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <input
-                            className="w-14 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 -mx-1 text-center"
-                            value={r.apartment}
-                            onChange={(e) => updateRow(i, 'apartment', e.target.value)}
-                            placeholder="—"
-                          />
-                        </td>
-                        <td className="px-2 py-1.5 text-right">
-                          <input
-                            type="number"
-                            className="w-24 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 text-right text-red-600"
-                            value={r.expenditure ?? ''}
-                            onChange={(e) => updateRow(i, 'expenditure', e.target.value ? parseFloat(e.target.value) : null)}
-                          />
-                        </td>
-                        <td className="px-2 py-1.5 text-right">
-                          <input
-                            type="number"
-                            className="w-24 bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-1 text-right text-emerald-600"
-                            value={r.income ?? ''}
-                            onChange={(e) => updateRow(i, 'income', e.target.value ? parseFloat(e.target.value) : null)}
-                          />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <Select value={r.category} onValueChange={(v) => updateRow(i, 'category', v)}>
-                            <SelectTrigger className="h-6 text-xs border-0 bg-transparent px-1 focus:bg-muted/50">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ALL_CATEGORIES.map((c) => (
-                                <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <Select value={r.paymentMode} onValueChange={(v) => updateRow(i, 'paymentMode', v)}>
-                            <SelectTrigger className="h-6 text-xs border-0 bg-transparent px-1 focus:bg-muted/50">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PAYMENT_MODES.map((m) => (
-                                <SelectItem key={m} value={m} className="text-xs">{m}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                      </tr>
+                        row={r}
+                        idx={i}
+                        imported={importedSet.has(i)}
+                        categoryOpts={categoryOpts}
+                        onToggle={toggleRow}
+                        onUpdate={updateRow}
+                        onUpdateParticulars={updateParticulars}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -456,9 +549,9 @@ export function ImportStatementModal({ open, fy, onClose, onImported }: Props) {
 
           {step === 'upload' && (
             <Button size="sm" onClick={handleParse} disabled={!fileList.length || parsing}>
-              {parsing ? (
-                <><div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />Parsing…</>
-              ) : 'Parse File'}
+              {parsing
+                ? <><div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />Parsing…</>
+                : 'Parse File'}
             </Button>
           )}
           {step === 'map' && (

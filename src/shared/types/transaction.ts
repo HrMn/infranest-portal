@@ -76,7 +76,7 @@ export interface TransactionSummary {
 // Shape of a parsed row from a bank statement (before it becomes a Transaction)
 export interface ParsedStatementRow {
   date: string
-  particulars: string
+  particulars: string         // formatted display (e.g. "MMC - 1A - Apr-2026" for income)
   expenditure: number | null
   income: number | null
   balance: number | null
@@ -85,4 +85,6 @@ export interface ParsedStatementRow {
   apartment: string           // auto-detected from Mapping_Data; user can override
   include: boolean            // user can deselect rows before import
   outOfRange?: boolean        // true when date falls outside the selected FY
+  remarks?: string            // original bank statement description
+  refNo?: string              // cheque / reference number
 }

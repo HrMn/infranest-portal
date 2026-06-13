@@ -2,7 +2,7 @@ import { Menu, LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { FYSelector } from './FYSelector'
-import { ROLE_LABELS } from '@/shared/utils/constants'
+import { DISPLAY_ROLE_LABELS } from '@/shared/utils/constants'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -48,7 +48,7 @@ export function Header() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
-                <p className="text-xs text-primary">{user ? ROLE_LABELS[user.role] : ''}</p>
+                <p className="text-xs text-primary">{user ? DISPLAY_ROLE_LABELS[user.displayRole] ?? user.displayRole : ''}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
