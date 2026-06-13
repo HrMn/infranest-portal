@@ -1,23 +1,20 @@
 import { Outlet } from 'react-router-dom'
-import { Layout } from 'antd'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { ErrorBoundary } from '../ErrorBoundary/ErrorBoundary'
 
-const { Content } = Layout
-
 export function AppLayout() {
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <div className="flex h-full min-h-screen">
       <Sidebar />
-      <Layout>
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <Content style={{ padding: 24, background: '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
+        <main className="flex-1 overflow-auto bg-white p-6">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
-        </Content>
-      </Layout>
-    </Layout>
+        </main>
+      </div>
+    </div>
   )
 }

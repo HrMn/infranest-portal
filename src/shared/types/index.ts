@@ -3,6 +3,7 @@ export * from './transaction'
 export * from './mmc'
 export * from './resident'
 export * from './report'
+export * from './config'
 
 export interface GasResponse<T> {
   success: boolean

@@ -1,88 +1,64 @@
-import { Layout, Space, Avatar, Dropdown, Typography, Button, Tooltip } from 'antd'
-import {
-  UserOutlined,
-  LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-} from '@ant-design/icons'
+import { Menu, LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { FYSelector } from './FYSelector'
 import { ROLE_LABELS } from '@/shared/utils/constants'
-
-const { Header: AntHeader } = Layout
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export function Header() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const { sidebarCollapsed, setSidebarCollapsed } = useAppStore()
 
-  const userMenuItems = [
-    {
-      key: 'info',
-      label: (
-        <div style={{ padding: '4px 0' }}>
-          <div><strong>{user?.name}</strong></div>
-          <div style={{ color: '#8c8c8c', fontSize: 12 }}>{user?.email}</div>
-          <div style={{ color: '#1677ff', fontSize: 12 }}>
-            {user ? ROLE_LABELS[user.role] : ''}
-          </div>
-        </div>
-      ),
-      disabled: true,
-    },
-    { type: 'divider' as const },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Sign Out',
-      danger: true,
-      onClick: logout,
-    },
-  ]
-
   return (
-    <AntHeader
-      style={{
-        background: '#fff',
-        borderBottom: '1px solid #f0f0f0',
-        padding: '0 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: 64,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-      }}
-    >
-      {/* Left: collapse toggle */}
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-white px-4">
+      {/* Sidebar toggle */}
       <Button
-        type="text"
-        icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        variant="ghost"
+        size="icon"
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-        style={{ fontSize: 16, width: 40, height: 40 }}
-      />
+        className="h-8 w-8"
+      >
+        <Menu className="h-4 w-4" />
+      </Button>
 
-      {/* Right: FY selector + user */}
-      <Space size={16}>
-        <Space size={8}>
-          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-            Fiscal Year:
-          </Typography.Text>
-          <FYSelector />
-        </Space>
+      {/* Right side */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-muted-foreground hidden sm:inline">Fiscal Year:</span>
+        <FYSelector />
 
-        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-          <Tooltip title={user?.name}>
-            <Avatar
-              src={user?.picture}
-              icon={<UserOutlined />}
-              style={{ cursor: 'pointer', background: '#1677ff' }}
-            />
-          </Tooltip>
-        </Dropdown>
-      </Space>
-    </AntHeader>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="h-8 w-8 rounded-full overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-primary shrink-0">
+              {user?.picture ? (
+                <img src={user.picture} alt={user.name} className="h-8 w-8 object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-primary-foreground">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{user?.name}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-primary">{user ? ROLE_LABELS[user.role] : ''}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
   )
 }

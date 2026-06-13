@@ -14,10 +14,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-antd': ['antd', '@ant-design/icons'],
-          'vendor-charts': ['@ant-design/charts'],
-          'vendor-state': ['zustand', '@tanstack/react-query'],
+          'vendor-react':   ['react', 'react-dom', 'react-router-dom'],
+          'vendor-radix':   ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-dropdown-menu', '@radix-ui/react-checkbox', '@radix-ui/react-tooltip'],
+          'vendor-charts':  ['recharts'],
+          'vendor-state':   ['zustand', '@tanstack/react-query'],
         },
       },
     },

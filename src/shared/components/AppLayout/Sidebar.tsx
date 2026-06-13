@@ -1,46 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Layout, Menu, Typography } from 'antd'
-import {
-  DashboardOutlined,
-  BankOutlined,
-  TeamOutlined,
-  BarChartOutlined,
-  TransactionOutlined,
-  SettingOutlined,
-} from '@ant-design/icons'
+import { ReceiptText, BarChart2, Settings2 } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
-import { APP_NAME, hasPermission } from '@/shared/utils/constants'
 import { useAppStore } from '@/shared/store/appStore'
-import { Permission } from '@/shared/types'
+import { hasPermission } from '@/shared/utils/constants'
+import { cn } from '@/lib/utils'
+import logoUrl from '@/assets/logo.png'
 
-const { Sider } = Layout
-
-type MenuItem = {
+type NavItem = {
   key: string
   icon: React.ReactNode
   label: string
-  children?: MenuItem[]
-  permission?: Permission
+  permission?: string
 }
 
-const NAV_ITEMS: MenuItem[] = [
-  { key: '/',          icon: <DashboardOutlined />,   label: 'Dashboard',         permission: 'view:dashboard' },
-  { key: '/mmc',       icon: <BankOutlined />,        label: 'MMC Collections',   permission: 'view:mmc' },
-  { key: '/residents', icon: <TeamOutlined />,        label: 'Resident Directory', permission: 'view:residents' },
-  {
-    key: '/reports',
-    icon: <BarChartOutlined />,
-    label: 'Reports',
-    permission: 'view:reports',
-    children: [
-      { key: '/reports/monthly',  icon: <BarChartOutlined />, label: 'Monthly Summary' },
-      { key: '/reports/income',   icon: <BarChartOutlined />, label: 'Income Analysis' },
-      { key: '/reports/expense',  icon: <BarChartOutlined />, label: 'Expense Analysis' },
-      { key: '/reports/mmc',      icon: <BarChartOutlined />, label: 'MMC Analysis' },
-    ],
-  },
-  { key: '/transactions', icon: <TransactionOutlined />, label: 'Transactions', permission: 'view:transactions' },
-  { key: '/settings/users', icon: <SettingOutlined />, label: 'Settings', permission: 'view:settings' },
+const NAV_ITEMS: NavItem[] = [
+  { key: '/transactions',       icon: <ReceiptText className="h-4 w-4" />, label: 'Transactions',       permission: 'view:transactions' },
+  { key: '/statement-analysis', icon: <BarChart2   className="h-4 w-4" />, label: 'Statement Analysis', permission: 'view:transactions' },
+  { key: '/config',             icon: <Settings2   className="h-4 w-4" />, label: 'Configuration',      permission: 'manage:config' },
 ]
 
 export function Sidebar() {
@@ -49,83 +25,53 @@ export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const user = useAuthStore((s) => s.user)
 
-  // Determine selected and open keys
-  const selectedKey = location.pathname
-  const openKeys = NAV_ITEMS
-    .filter((item) => item.children?.some((c) => location.pathname.startsWith(c.key)))
-    .map((item) => item.key)
+  const visibleItems = NAV_ITEMS.filter((item) =>
+    !item.permission || (user && hasPermission(user.role, item.permission as never)),
+  )
 
-  function buildMenuItems() {
-    if (!user) return []
-    return NAV_ITEMS
-      .filter((item) => {
-        if (!item.permission) return true
-        return hasPermission(user.role, item.permission)
-      })
-      .map((item) => ({
-        key: item.key,
-        icon: item.icon,
-        label: item.label,
-        children: item.children?.map((c) => ({
-          key: c.key,
-          icon: c.icon,
-          label: c.label,
-        })),
-      }))
+  function isActive(key: string) {
+    return location.pathname === key || location.pathname.startsWith(key + '/')
   }
 
   return (
-    <Sider
-      collapsible
-      collapsed={collapsed}
-      trigger={null}
-      width={220}
-      style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}
+    <aside
+      className={cn(
+        'flex flex-col border-r border-sidebar-border shadow-[2px_0_8px_0_rgba(0,0,0,0.06)] bg-sidebar text-sidebar-foreground transition-all duration-200 shrink-0',
+        collapsed ? 'w-14' : 'w-52',
+      )}
     >
       {/* Logo */}
-      <div
-        style={{
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          padding: collapsed ? 0 : '0 20px',
-          gap: 10,
-          borderBottom: '1px solid #f0f0f0',
-        }}
-      >
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            background: '#1677ff',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: 13,
-            flexShrink: 0,
-          }}
-        >
-          IN
-        </div>
+      <div className={cn('flex h-14 items-center border-b border-sidebar-border px-3', collapsed ? 'justify-center' : 'gap-2.5')}>
+        <img
+          src={logoUrl}
+          alt="Infranest"
+          className={cn('object-contain shrink-0', collapsed ? 'h-7 max-w-[36px]' : 'h-8 max-w-[120px]')}
+        />
         {!collapsed && (
-          <Typography.Text strong style={{ fontSize: 14 }}>
-            {APP_NAME}
-          </Typography.Text>
+          <span className="text-sm font-semibold text-sidebar-foreground truncate">Infranest</span>
         )}
       </div>
 
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        defaultOpenKeys={openKeys}
-        items={buildMenuItems()}
-        onClick={({ key }) => navigate(key)}
-        style={{ border: 'none', paddingTop: 8 }}
-      />
-    </Sider>
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 p-2 pt-3">
+        {visibleItems.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => navigate(item.key)}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors',
+              isActive(item.key)
+                ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+              collapsed && 'justify-center px-0',
+            )}
+            title={collapsed ? item.label : undefined}
+          >
+            {item.icon}
+            {!collapsed && <span>{item.label}</span>}
+          </button>
+        ))}
+      </nav>
+    </aside>
   )
 }

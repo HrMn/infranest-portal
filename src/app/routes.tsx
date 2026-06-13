@@ -1,18 +1,16 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { Spin } from 'antd'
 import { AppLayout } from '@/shared/components/AppLayout/AppLayout'
 import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute'
 import { LoginPage } from '@/features/auth/components/LoginPage'
 
-const DashboardPage        = lazy(() => import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })))
-const MMCPage              = lazy(() => import('@/features/mmc').then((m) => ({ default: m.MMCPage })))
-const ResidentDirectoryPage = lazy(() => import('@/features/residents').then((m) => ({ default: m.ResidentDirectoryPage })))
-const ReportsPage          = lazy(() => import('@/features/reports').then((m) => ({ default: m.ReportsPage })))
+const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
+const StatementAnalysisPage = lazy(() => import('@/features/statement-analysis').then((m) => ({ default: m.StatementAnalysisPage })))
+const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
 
 const Loader = (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
-    <Spin size="large" />
+  <div className="flex items-center justify-center h-64">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
   </div>
 )
 
@@ -29,32 +27,28 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={
-            <ProtectedRoute permission="view:dashboard">
-              <DashboardPage />
+          <Route index element={<Navigate to="/transactions" replace />} />
+
+          <Route path="transactions/*" element={
+            <ProtectedRoute permission="view:transactions">
+              <TransactionsPage />
             </ProtectedRoute>
           } />
 
-          <Route path="mmc" element={
-            <ProtectedRoute permission="view:mmc">
-              <MMCPage />
+          <Route path="statement-analysis" element={
+            <ProtectedRoute permission="view:transactions">
+              <StatementAnalysisPage />
             </ProtectedRoute>
           } />
 
-          <Route path="residents" element={
-            <ProtectedRoute permission="view:residents">
-              <ResidentDirectoryPage />
-            </ProtectedRoute>
-          } />
-
-          <Route path="reports/*" element={
-            <ProtectedRoute permission="view:reports">
-              <ReportsPage />
+          <Route path="config" element={
+            <ProtectedRoute permission="manage:config">
+              <ConfigPage />
             </ProtectedRoute>
           } />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/transactions" replace />} />
       </Routes>
     </Suspense>
   )

@@ -23,8 +23,10 @@ export type Permission =
   | 'create:transaction'
   | 'edit:transaction'
   | 'delete:transaction'
+  | 'import:statement'
   | 'manage:users'
   | 'view:settings'
+  | 'manage:config'
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   [Role.TREASURER]: [
@@ -36,8 +38,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'create:transaction',
     'edit:transaction',
     'delete:transaction',
+    'import:statement',
     'manage:users',
     'view:settings',
+    'manage:config',
   ],
   [Role.COMMITTEE]: [
     'view:dashboard',

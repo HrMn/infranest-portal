@@ -140,15 +140,27 @@ function _route(action, e, principal) {
       AuthGuard.requireRole(principal, READ_ROLES);
       return ResponseHelper.success(ReportService.getExpenseBreakdown(fy));
 
-    // ---- Transactions (Phase 1B) ----
+    // ---- Transactions ----
     case 'getTransactions':
       AuthGuard.requireRole(principal, READ_ROLES);
       return ResponseHelper.success(TransactionService.getAll(fy));
 
+    case 'getTransactionSummary':
+      AuthGuard.requireRole(principal, READ_ROLES);
+      return ResponseHelper.success(TransactionService.getSummary(fy, p.month || null));
+
+    case 'getBankSummary':
+      AuthGuard.requireRole(principal, READ_ROLES);
+      return ResponseHelper.success(TransactionService.getBankSummary(fy, p.month || null));
+
+    case 'getCashSummary':
+      AuthGuard.requireRole(principal, READ_ROLES);
+      return ResponseHelper.success(TransactionService.getCashSummary(fy, p.month || null));
+
     case 'createTransaction': {
       AuthGuard.requireRole(principal, WRITE_ROLES);
       var payload = JSON.parse(e.postData.contents || '{}');
-      var result = TransactionService.create(fy, payload);
+      var result = TransactionService.create(fy, payload, principal.email);
       return ResponseHelper.success(result);
     }
 
@@ -163,6 +175,70 @@ function _route(action, e, principal) {
       AuthGuard.requireRole(principal, WRITE_ROLES);
       var payload = JSON.parse(e.postData.contents || '{}');
       TransactionService.remove(fy, payload.rowIndex);
+      return ResponseHelper.success({ ok: true });
+    }
+
+    case 'importTransactions': {
+      AuthGuard.requireRole(principal, WRITE_ROLES);
+      var payload = JSON.parse(e.postData.contents || '{}');
+      var result = TransactionService.bulkCreate(fy, payload.rows || [], principal.email);
+      return ResponseHelper.success(result);
+    }
+
+    case 'getAptMapping': {
+      AuthGuard.requireRole(principal, READ_ROLES);
+      var sheet = Config.getFinancialsSheet(fy, Config.TABS.MAPPING_DATA);
+      if (!sheet) return ResponseHelper.success({ mappings: [] });
+      var data = sheet.getDataRange().getValues();
+      var mappings = [];
+      for (var i = 1; i < data.length; i++) {
+        var aptKey    = String(data[i][Config.MAPPING_COLS.APT_KEY]   || '').trim();
+        var apartment = String(data[i][Config.MAPPING_COLS.APARTMENT] || '').trim();
+        if (aptKey && apartment) {
+          mappings.push({ aptKey: aptKey, apartment: apartment });
+        }
+      }
+      return ResponseHelper.success({ mappings: mappings });
+    }
+
+    // ---- Config / Master Data ----
+    case 'getConfigData': {
+      AuthGuard.requireRole(principal, READ_ROLES);
+      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      if (!sheet) return ResponseHelper.success({ items: [] });
+      var data = sheet.getDataRange().getValues();
+      var filterType = p.configType || '';
+      var items = [];
+      for (var i = 1; i < data.length; i++) {
+        var ct     = String(data[i][Config.CONFIG_COLS.CONFIG_TYPE] || '').trim();
+        var key    = String(data[i][Config.CONFIG_COLS.KEY]         || '').trim();
+        var status = String(data[i][Config.CONFIG_COLS.STATUS]      || 'Active').trim();
+        if (!ct && !key) continue;
+        if (filterType && ct !== filterType) continue;
+        items.push({ configType: ct, key: key, status: status, rowIndex: i + 1 });
+      }
+      return ResponseHelper.success({ items: items });
+    }
+
+    case 'upsertConfigItem': {
+      AuthGuard.requireRole(principal, WRITE_ROLES);
+      var payload = JSON.parse(e.postData.contents || '{}');
+      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');
+      if (payload.rowIndex) {
+        sheet.getRange(payload.rowIndex, 1, 1, 3).setValues([[payload.configType, payload.key, payload.status || 'Active']]);
+      } else {
+        sheet.appendRow([payload.configType, payload.key, payload.status || 'Active']);
+      }
+      return ResponseHelper.success({ ok: true });
+    }
+
+    case 'deleteConfigItem': {
+      AuthGuard.requireRole(principal, WRITE_ROLES);
+      var payload = JSON.parse(e.postData.contents || '{}');
+      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');
+      sheet.deleteRow(payload.rowIndex);
       return ResponseHelper.success({ ok: true });
     }
 

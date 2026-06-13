@@ -1,4 +1,4 @@
-export type PaymentMode = 'Cash' | 'UPI' | 'NEFT' | 'RTGS' | 'Cheque' | 'Online'
+export type PaymentMode = 'Cash' | 'Online' | 'UPI' | 'NEFT' | 'RTGS' | 'Cheque'
 export type PaymentType = 'Debit' | 'Credit'
 
 export type IncomeCategory =
@@ -28,6 +28,8 @@ export type ExpenseCategory =
 
 export type TransactionCategory = IncomeCategory | ExpenseCategory
 
+export type TransactionSource = 'Manual' | 'Statement Import' | ''
+
 export interface Transaction {
   rowIndex: number
   date: string
@@ -40,8 +42,12 @@ export interface Transaction {
   receiptNo: string
   voucherNo: string
   remarks: string
-  status: string            // col K — e.g. Done, Pending, Cleared
-  category: TransactionCategory | string  // derived from Particulars, not a sheet column
+  status: string
+  transactionId: string
+  source: TransactionSource | string
+  importedBy: string
+  importedOn: string
+  category: TransactionCategory | string  // derived from Particulars, not stored
 }
 
 export interface TransactionCreatePayload {
@@ -56,4 +62,27 @@ export interface TransactionCreatePayload {
   voucherNo: string
   remarks: string
   status: string
+}
+
+export interface TransactionSummary {
+  totalIncome: number
+  totalExpense: number
+  netBalance: number
+  count: number
+  incomeByCategory: Array<{ category: string; amount: number }>
+  expenseByCategory: Array<{ category: string; amount: number }>
+}
+
+// Shape of a parsed row from a bank statement (before it becomes a Transaction)
+export interface ParsedStatementRow {
+  date: string
+  particulars: string
+  expenditure: number | null
+  income: number | null
+  balance: number | null
+  paymentMode: string
+  category: string
+  apartment: string           // auto-detected from Mapping_Data; user can override
+  include: boolean            // user can deselect rows before import
+  outOfRange?: boolean        // true when date falls outside the selected FY
 }
