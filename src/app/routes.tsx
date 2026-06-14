@@ -27,7 +27,7 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/financials/transactions" replace />} />
+          <Route index element={<Navigate to="/financials/dashboard" replace />} />
 
           <Route path="financials/dashboard" element={
             <ProtectedRoute permission="view:transactions">
@@ -48,7 +48,7 @@ export function AppRoutes() {
           } />
         </Route>
 
-        <Route path="*" element={<Navigate to="/financials/transactions" replace />} />
+        <Route path="*" element={<Navigate to="/financials/dashboard" replace />} />
       </Routes>
     </Suspense>
   )
