@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRout
 import { LoginPage } from '@/features/auth/components/LoginPage'
 
 const DashboardPage         = lazy(() => import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })))
+const ReportsPage           = lazy(() => import('@/features/reports').then((m) => ({ default: m.ReportsPage })))
 const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
 const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
 
@@ -32,6 +33,12 @@ export function AppRoutes() {
           <Route path="financials/dashboard" element={
             <ProtectedRoute permission="view:transactions">
               <DashboardPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="financials/reports" element={
+            <ProtectedRoute permission="view:transactions">
+              <ReportsPage />
             </ProtectedRoute>
           } />
 

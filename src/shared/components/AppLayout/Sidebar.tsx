@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight } from 'lucide-react'
+import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2 } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { hasPermission } from '@/shared/utils/constants'
@@ -35,8 +35,9 @@ const NAV_ENTRIES: NavEntry[] = [
     label: 'Financials',
     permission: 'view:transactions',
     children: [
-      { type: 'leaf', key: '/financials/dashboard',     icon: <LayoutDashboard className="h-4 w-4" />, label: 'Dashboard',     permission: 'view:transactions' },
-      { type: 'leaf', key: '/financials/transactions',  icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions',  permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/dashboard',    icon: <LayoutDashboard className="h-4 w-4" />, label: 'Dashboard',    permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/transactions', icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions', permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/reports',      icon: <FileBarChart2   className="h-4 w-4" />, label: 'Reports',      permission: 'view:transactions' },
     ],
   },
   { type: 'leaf', key: '/config', icon: <Settings2 className="h-4 w-4" />, label: 'Configuration', permission: 'manage:config' },
@@ -146,7 +147,7 @@ export function Sidebar() {
       className={cn(
         'flex flex-col border-r border-sidebar-border shadow-[2px_0_8px_0_rgba(0,0,0,0.06)] bg-sidebar text-sidebar-foreground transition-all duration-200 shrink-0',
         // Mobile: fixed overlay, slide in/out
-        'fixed inset-y-0 left-0 z-50 w-64',
+        'print:hidden fixed inset-y-0 left-0 z-50 w-64',
         mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
         // Desktop: static in flex layout, collapsible
         'md:relative md:inset-auto md:z-auto md:translate-x-0',

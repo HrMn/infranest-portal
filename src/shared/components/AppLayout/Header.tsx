@@ -22,7 +22,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-white px-4">
+    <header className="print:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-white px-4">
       {/* Sidebar toggle */}
       <Button
         variant="ghost"
