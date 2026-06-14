@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ToggleGroup } from '@/components/ui/toggle-group'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -12,6 +13,7 @@ import { useMMCStatus, useUpdateMMCPayment } from './hooks/useMMC'
 import { useAppStore } from '@/shared/store/appStore'
 import { usePermission } from '@/shared/hooks/usePermission'
 import { formatCurrency } from '@/shared/utils/formatters'
+import { FISCAL_YEARS, type FiscalYear } from '@/shared/utils/constants'
 import { cn } from '@/lib/utils'
 
 interface EditCell {
@@ -36,12 +38,16 @@ function SortIcon({ col, sort }: { col: string; sort: SortState | null }) {
     : <ChevronDown className="h-3 w-3" />
 }
 
-export function MMCPage() {
-  const selectedFY = useAppStore((s) => s.selectedFY)
-  const canEdit    = usePermission('verify:transaction')
+const FY_OPTIONS = FISCAL_YEARS.map((fy) => ({ value: fy, label: fy }))
 
-  const { data, isLoading }  = useMMCStatus(selectedFY)
-  const updatePayment        = useUpdateMMCPayment(selectedFY)
+export function MMCPage() {
+  const globalFY = useAppStore((s) => s.selectedFY)
+  const canEdit  = usePermission('verify:transaction')
+
+  const [fy, setFy] = useState<FiscalYear>(globalFY)
+
+  const { data, isLoading }  = useMMCStatus(fy)
+  const updatePayment        = useUpdateMMCPayment(fy)
 
   const [search, setSearch]         = useState('')
   const [sort, setSort]             = useState<SortState | null>(null)
@@ -108,9 +114,13 @@ export function MMCPage() {
   return (
     <div className="space-y-4">
       {/* Page header */}
-      <div>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold">MMC Collection</h1>
-        <p className="text-sm text-muted-foreground">{selectedFY}</p>
+        <ToggleGroup
+          options={FY_OPTIONS}
+          value={fy}
+          onChange={(v) => setFy(v as FiscalYear)}
+        />
       </div>
 
       {/* KPI strip */}
