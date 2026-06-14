@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ToggleGroup } from '@/components/ui/toggle-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -38,7 +38,6 @@ function SortIcon({ col, sort }: { col: string; sort: SortState | null }) {
     : <ChevronDown className="h-3 w-3" />
 }
 
-const FY_OPTIONS = FISCAL_YEARS.map((fy) => ({ value: fy, label: fy }))
 
 export function MMCPage() {
   const globalFY = useAppStore((s) => s.selectedFY)
@@ -116,11 +115,16 @@ export function MMCPage() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold">MMC Collection</h1>
-        <ToggleGroup
-          options={FY_OPTIONS}
-          value={fy}
-          onChange={(v) => setFy(v as FiscalYear)}
-        />
+        <Select value={fy} onValueChange={(v) => setFy(v as FiscalYear)}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FISCAL_YEARS.map((f) => (
+              <SelectItem key={f} value={f}>{f}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* KPI strip */}
