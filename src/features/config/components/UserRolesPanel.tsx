@@ -107,15 +107,15 @@ export function UserRolesPanel() {
         </Button>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded-lg border overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Name</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Email</th>
+              <th className="hidden sm:table-cell px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Email</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-36">Role</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-28">Privilege</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-32">Last Login</th>
+              <th className="hidden sm:table-cell px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-32">Last Login</th>
               <th className="px-4 py-2.5 w-10"></th>
             </tr>
           </thead>
@@ -128,7 +128,7 @@ export function UserRolesPanel() {
                 return (
                   <tr key={u.email} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3 font-medium">{u.name || '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{u.email}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-muted-foreground text-xs">{u.email}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs text-foreground">
                         {DISPLAY_ROLE_LABELS[u.displayRole as DisplayRole] ?? u.displayRole}
@@ -142,7 +142,7 @@ export function UserRolesPanel() {
                         {PRIVILEGE_LABELS[priv] ?? priv}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatLastLogin(u.lastLogin)}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-xs text-muted-foreground">{formatLastLogin(u.lastLogin)}</td>
                     <td className="px-4 py-3">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(u)}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />

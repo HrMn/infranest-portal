@@ -43,10 +43,12 @@ const NAV_ENTRIES: NavEntry[] = [
 ]
 
 export function Sidebar() {
-  const location = useLocation()
-  const navigate  = useNavigate()
-  const collapsed = useAppStore((s) => s.sidebarCollapsed)
-  const user      = useAuthStore((s) => s.user)
+  const location             = useLocation()
+  const navigate             = useNavigate()
+  const collapsed            = useAppStore((s) => s.sidebarCollapsed)
+  const mobileSidebarOpen    = useAppStore((s) => s.mobileSidebarOpen)
+  const setMobileSidebarOpen = useAppStore((s) => s.setMobileSidebarOpen)
+  const user                 = useAuthStore((s) => s.user)
 
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(['financials']))
 
@@ -81,7 +83,7 @@ export function Sidebar() {
     return (
       <button
         key={item.key}
-        onClick={() => navigate(item.key)}
+        onClick={() => { navigate(item.key); setMobileSidebarOpen(false) }}
         className={cn(itemClass(active), collapsed && 'justify-center px-0', indent && !collapsed && 'pl-7')}
         title={collapsed ? item.label : undefined}
       >
@@ -104,7 +106,7 @@ export function Sidebar() {
       return (
         <button
           key={group.key}
-          onClick={() => navigate(visibleChildren[0].key)}
+          onClick={() => { navigate(visibleChildren[0].key); setMobileSidebarOpen(false) }}
           className={cn(itemClass(groupActive), 'justify-center px-0')}
           title={group.label}
         >
@@ -143,7 +145,12 @@ export function Sidebar() {
     <aside
       className={cn(
         'flex flex-col border-r border-sidebar-border shadow-[2px_0_8px_0_rgba(0,0,0,0.06)] bg-sidebar text-sidebar-foreground transition-all duration-200 shrink-0',
-        collapsed ? 'w-14' : 'w-52',
+        // Mobile: fixed overlay, slide in/out
+        'fixed inset-y-0 left-0 z-50 w-64',
+        mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        // Desktop: static in flex layout, collapsible
+        'md:relative md:inset-auto md:z-auto md:translate-x-0',
+        collapsed ? 'md:w-14' : 'md:w-52',
       )}
     >
       {/* Logo */}

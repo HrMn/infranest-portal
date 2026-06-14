@@ -195,7 +195,7 @@ export function TransactionsPage() {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <div className="relative w-full sm:flex-1 sm:min-w-[180px] sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search transactions…"
@@ -268,18 +268,18 @@ export function TransactionsPage() {
                 <tr className="border-b bg-muted/40">
                   <SortableHeader label="Date"    col="date"    sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="w-28 text-left" />
                   <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Particulars</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-36">Category</th>
+                  <th className="hidden sm:table-cell px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-36">Category</th>
                   <SortableHeader label="Income"  col="income"  sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="w-24 text-right" />
                   <SortableHeader label="Expense" col="expense" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} className="w-24 text-right" />
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-20">Mode</th>
-                  <th className="px-2 py-2.5 text-center text-xs font-medium text-muted-foreground w-10" title="Verification status">✓</th>
+                  <th className="hidden sm:table-cell px-4 py-2.5 text-left text-xs font-medium text-muted-foreground w-20">Mode</th>
+                  <th className="hidden sm:table-cell px-2 py-2.5 text-center text-xs font-medium text-muted-foreground w-10" title="Verification status">✓</th>
                   <th className="w-10" />
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                    <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted-foreground">
                       No transactions found
                     </td>
                   </tr>
@@ -402,7 +402,7 @@ function TransactionRow({ txn, fy, canEdit, canVerify, isExpanded, onToggle, cat
             {txn.particulars}
           </p>
         </td>
-        <td className="px-4 py-2.5">
+        <td className="hidden sm:table-cell px-4 py-2.5">
           <span className="text-xs text-muted-foreground">{txn.paymentType || '—'}</span>
         </td>
         <td className="px-4 py-2.5 text-right">
@@ -415,10 +415,10 @@ function TransactionRow({ txn, fy, canEdit, canVerify, isExpanded, onToggle, cat
             <span className="text-xs font-medium text-red-600">{formatCurrency(txn.expenditure)}</span>
           ) : null}
         </td>
-        <td className="px-4 py-2.5">
+        <td className="hidden sm:table-cell px-4 py-2.5">
           <span className="text-xs text-muted-foreground">{txn.paymentMode}</span>
         </td>
-        <td className="px-2 py-2.5 text-center">
+        <td className="hidden sm:table-cell px-2 py-2.5 text-center">
           <button
             onClick={handleStatusToggle}
             disabled={!canVerify || verify.isPending}
@@ -442,7 +442,7 @@ function TransactionRow({ txn, fy, canEdit, canVerify, isExpanded, onToggle, cat
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={8} className="p-0">
+          <td colSpan={5} className="p-0">
             <TransactionExpandedPanel
               txn={txn}
               fy={fy}

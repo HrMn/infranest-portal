@@ -9,9 +9,17 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export function Header() {
-  const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
-  const { sidebarCollapsed, setSidebarCollapsed } = useAppStore()
+  const user                 = useAuthStore((s) => s.user)
+  const logout               = useAuthStore((s) => s.logout)
+  const { sidebarCollapsed, setSidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen } = useAppStore()
+
+  function handleMenuClick() {
+    if (window.innerWidth < 768) {
+      setMobileSidebarOpen(!mobileSidebarOpen)
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-white px-4">
@@ -19,7 +27,7 @@ export function Header() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onClick={handleMenuClick}
         className="h-8 w-8"
       >
         <Menu className="h-4 w-4" />
