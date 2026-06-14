@@ -4,6 +4,7 @@ import { AppLayout } from '@/shared/components/AppLayout/AppLayout'
 import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute'
 import { LoginPage } from '@/features/auth/components/LoginPage'
 
+const DashboardPage         = lazy(() => import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })))
 const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
 const StatementAnalysisPage = lazy(() => import('@/features/statement-analysis').then((m) => ({ default: m.StatementAnalysisPage })))
 const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
@@ -27,9 +28,15 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/transactions" replace />} />
+          <Route index element={<Navigate to="/financials/transactions" replace />} />
 
-          <Route path="transactions/*" element={
+          <Route path="financials/dashboard" element={
+            <ProtectedRoute permission="view:transactions">
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="financials/transactions/*" element={
             <ProtectedRoute permission="view:transactions">
               <TransactionsPage />
             </ProtectedRoute>
@@ -48,7 +55,7 @@ export function AppRoutes() {
           } />
         </Route>
 
-        <Route path="*" element={<Navigate to="/transactions" replace />} />
+        <Route path="*" element={<Navigate to="/financials/transactions" replace />} />
       </Routes>
     </Suspense>
   )

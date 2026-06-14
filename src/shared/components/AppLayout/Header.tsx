@@ -1,7 +1,6 @@
 import { Menu, LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
-import { FYSelector } from './FYSelector'
 import { DISPLAY_ROLE_LABELS } from '@/shared/utils/constants'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,9 +27,6 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        <span className="text-xs text-muted-foreground hidden sm:inline">Fiscal Year:</span>
-        <FYSelector />
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="h-8 w-8 rounded-full overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-primary shrink-0">

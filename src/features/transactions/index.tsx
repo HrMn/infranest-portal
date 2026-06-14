@@ -12,13 +12,14 @@ import { MultiSelect } from '@/components/ui/multi-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import {
-  TrendingUp, TrendingDown, Wallet, Upload, Search, RefreshCw,
+  Upload, Search, RefreshCw,
   ArrowUpDown, ArrowUp, ArrowDown, X, ChevronRight, ChevronDown,
-  CheckCircle2, Clock, Loader2, Plus,
+  CheckCircle2, Clock, Loader2, Plus, TrendingUp, TrendingDown, Wallet,
 } from 'lucide-react'
 import { ImportStatementModal } from './components/ImportStatementModal'
 import { TransactionExpandedPanel } from './components/TransactionExpandedPanel'
 import { AddTransactionModal } from './components/AddTransactionModal'
+import { FYSelector } from '@/shared/components/AppLayout/FYSelector'
 import { useConfigData } from '@/features/config/hooks/useConfig'
 import { useUpdateTransaction, useVerifyTransaction } from './hooks/useTransactions'
 
@@ -73,12 +74,19 @@ export function TransactionsPage() {
     return configured.length > 0 ? configured : [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]
   }, [configData])
 
-  const [search,         setSearch]         = useState('')
-  const [monthFilter,    setMonthFilter]    = useState<string[]>([])
-  const [typeFilter,     setTypeFilter]     = useState<TypeFilter>('all')
-  const [modeFilter,     setModeFilter]     = useState<ModeFilter>('all')
-  const [sortCol,        setSortCol]        = useState<SortCol>('date')
-  const [sortDir,        setSortDir]        = useState<SortDir>('desc')
+  const [search,          setSearch]          = useState('')
+  const [monthFilter,     setMonthFilter]     = useState<string[]>([])
+  const [categoryFilter,  setCategoryFilter]  = useState<string[]>([])
+  const [typeFilter,      setTypeFilter]      = useState<TypeFilter>('all')
+  const [modeFilter,      setModeFilter]      = useState<ModeFilter>('all')
+  const [sortCol,         setSortCol]         = useState<SortCol>('date')
+  const [sortDir,         setSortDir]         = useState<SortDir>('desc')
+  const categoryOptions = useMemo(() => {
+    const cats = new Set<string>()
+    ;(transactions ?? []).forEach((t) => { if (t.paymentType) cats.add(t.paymentType) })
+    return Array.from(cats).sort().map((c) => ({ value: c, label: c }))
+  }, [transactions])
+
   const [importOpen,     setImportOpen]     = useState(false)
   const [addOpen,        setAddOpen]        = useState(false)
   const [page,           setPage]           = useState(1)
@@ -98,6 +106,7 @@ export function TransactionsPage() {
         const m = t.date.match(/^(\d{2})\/(\d{2})\//)
         if (!m || !monthFilter.includes(m[2])) return false
       }
+      if (categoryFilter.length > 0 && !categoryFilter.includes(t.paymentType || '')) return false
       if (typeFilter === 'income'  && !(t.income      && t.income      > 0)) return false
       if (typeFilter === 'expense' && !(t.expenditure && t.expenditure > 0)) return false
       if (modeFilter === 'online' && t.paymentMode?.toLowerCase() === 'cash') return false
@@ -130,14 +139,12 @@ export function TransactionsPage() {
       return sortDir === 'asc' ? cmp : -cmp
     })
     return list
-  }, [transactions, monthFilter, typeFilter, modeFilter, search, sortCol, sortDir])
+  }, [transactions, monthFilter, categoryFilter, typeFilter, modeFilter, search, sortCol, sortDir])
 
-  const totals = useMemo(() => {
-    if (!transactions) return { income: 0, expense: 0, net: 0, count: 0 }
-    const income  = transactions.reduce((s, t) => s + (t.income      ?? 0), 0)
-    const expense = transactions.reduce((s, t) => s + (t.expenditure ?? 0), 0)
-    return { income, expense, net: income - expense, count: transactions.length }
-  }, [transactions])
+  const filteredTotals = useMemo(() => ({
+    income:  filtered.reduce((s, t) => s + (t.income      ?? 0), 0),
+    expense: filtered.reduce((s, t) => s + (t.expenditure ?? 0), 0),
+  }), [filtered])
 
   function handleFilterChange(setter: (v: string) => void, v: string) {
     setter(v); setPage(1)
@@ -154,9 +161,6 @@ export function TransactionsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
-          {[0,1,2].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
-        </div>
         <Skeleton className="h-96 rounded-xl" />
       </div>
     )
@@ -164,50 +168,14 @@ export function TransactionsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" /> Total Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totals.income)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{fy}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5 text-red-500" /> Total Expense
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-600">{formatCurrency(totals.expense)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{totals.count} transactions</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-blue-500" /> Net Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold ${totals.net >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-              {totals.net >= 0 ? '+' : ''}{formatCurrency(totals.net)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{fy}</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Transactions table */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 py-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-sm font-semibold">Transactions — {fy}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold">Transactions</CardTitle>
+              <FYSelector />
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
               {canCreate && (
                 <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="h-8 gap-1.5">
@@ -226,7 +194,7 @@ export function TransactionsPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2 mt-1">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[180px] max-w-xs">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
@@ -241,6 +209,12 @@ export function TransactionsPage() {
               value={monthFilter}
               onChange={(v) => { setMonthFilter(v); setPage(1) }}
               placeholder="All Months"
+            />
+            <MultiSelect
+              options={categoryOptions}
+              value={categoryFilter}
+              onChange={(v) => { setCategoryFilter(v); setPage(1) }}
+              placeholder="All Categories"
             />
             <ToggleGroup
               value={typeFilter}
@@ -262,6 +236,28 @@ export function TransactionsPage() {
                 <X className="h-3 w-3 opacity-60" />
               </button>
             )}
+          </div>
+
+          {/* Filtered totals */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t pt-2.5 mt-0.5">
+            <span className="text-[11px] text-muted-foreground">{filtered.length} transaction{filtered.length !== 1 ? 's' : ''}</span>
+            <span className="flex items-center gap-1 text-[11px]">
+              <TrendingUp className="h-3 w-3 text-emerald-500" />
+              <span className="text-muted-foreground">Income</span>
+              <span className="font-semibold text-emerald-600 tabular-nums">{formatCurrency(filteredTotals.income)}</span>
+            </span>
+            <span className="flex items-center gap-1 text-[11px]">
+              <TrendingDown className="h-3 w-3 text-red-500" />
+              <span className="text-muted-foreground">Expense</span>
+              <span className="font-semibold text-red-600 tabular-nums">{formatCurrency(filteredTotals.expense)}</span>
+            </span>
+            <span className="flex items-center gap-1 text-[11px]">
+              <Wallet className="h-3 w-3 text-blue-500" />
+              <span className="text-muted-foreground">Net</span>
+              <span className={`font-semibold tabular-nums ${filteredTotals.income - filteredTotals.expense >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+                {filteredTotals.income - filteredTotals.expense >= 0 ? '+' : ''}{formatCurrency(filteredTotals.income - filteredTotals.expense)}
+              </span>
+            </span>
           </div>
         </CardHeader>
 
