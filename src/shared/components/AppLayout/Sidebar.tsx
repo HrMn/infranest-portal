@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ReceiptText, BarChart2, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight } from 'lucide-react'
+import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { hasPermission } from '@/shared/utils/constants'
@@ -39,8 +39,7 @@ const NAV_ENTRIES: NavEntry[] = [
       { type: 'leaf', key: '/financials/transactions',  icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions',  permission: 'view:transactions' },
     ],
   },
-  { type: 'leaf', key: '/statement-analysis', icon: <BarChart2  className="h-4 w-4" />, label: 'Statement Analysis', permission: 'view:transactions' },
-  { type: 'leaf', key: '/config',             icon: <Settings2  className="h-4 w-4" />, label: 'Configuration',      permission: 'manage:config'      },
+  { type: 'leaf', key: '/config', icon: <Settings2 className="h-4 w-4" />, label: 'Configuration', permission: 'manage:config' },
 ]
 
 export function Sidebar() {

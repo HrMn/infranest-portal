@@ -6,7 +6,6 @@ import { LoginPage } from '@/features/auth/components/LoginPage'
 
 const DashboardPage         = lazy(() => import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })))
 const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
-const StatementAnalysisPage = lazy(() => import('@/features/statement-analysis').then((m) => ({ default: m.StatementAnalysisPage })))
 const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
 
 const Loader = (
@@ -39,12 +38,6 @@ export function AppRoutes() {
           <Route path="financials/transactions/*" element={
             <ProtectedRoute permission="view:transactions">
               <TransactionsPage />
-            </ProtectedRoute>
-          } />
-
-          <Route path="statement-analysis" element={
-            <ProtectedRoute permission="view:transactions">
-              <StatementAnalysisPage />
             </ProtectedRoute>
           } />
 
