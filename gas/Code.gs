@@ -125,6 +125,13 @@ function _route(action, e, principal) {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(MMCService.getStatus(fy));
 
+    case 'updateMMCPayment': {
+      AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
+      var payload = JSON.parse(e.postData.contents || '{}');
+      MMCService.recordPayment(fy, payload.apartment, payload.month, payload.amount);
+      return ResponseHelper.success({ ok: true });
+    }
+
     // ---- Residents ----
     case 'getResidents': {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);

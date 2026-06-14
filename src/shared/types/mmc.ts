@@ -2,10 +2,11 @@ export interface MMCApartment {
   slNo: number
   owner: string
   type: string
-  ownerType: string   // combined "owner | type"
+  ownerType: string
   apartment: string
   occupied: boolean
-  collections: Record<string, number | null>
+  totalDue: number
+  collections: Record<string, number | null>  // value = outstanding due (0 = cleared, >0 = owed, null = future)
 }
 
 export interface MMCStatus {
@@ -14,8 +15,10 @@ export interface MMCStatus {
   summary: {
     totalApartments: number
     occupiedApartments: number
-    collectedThisMonth: number
-    outstandingThisMonth: number
+    totalOutstanding: number
+    dueThisFY: number
+    clearedThisMonth: number
+    pendingThisMonth: number
     collectionRateThisMonth: number
     currentMonth: string
   }

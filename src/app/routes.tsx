@@ -8,6 +8,9 @@ const DashboardPage         = lazy(() => import('@/features/dashboard').then((m)
 const ReportsPage           = lazy(() => import('@/features/reports').then((m) => ({ default: m.ReportsPage })))
 const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
 const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
+const MMCPage               = lazy(() => import('@/features/mmc').then((m) => ({ default: m.MMCPage })))
+const WaterPage             = lazy(() => import('@/features/water').then((m) => ({ default: m.WaterPage })))
+const GasPage               = lazy(() => import('@/features/gas').then((m) => ({ default: m.GasPage })))
 
 const Loader = (
   <div className="flex items-center justify-center h-64">
@@ -45,6 +48,24 @@ export function AppRoutes() {
           <Route path="financials/transactions/*" element={
             <ProtectedRoute permission="view:transactions">
               <TransactionsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="collections/mmc" element={
+            <ProtectedRoute permission="view:mmc">
+              <MMCPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="collections/water" element={
+            <ProtectedRoute permission="view:mmc">
+              <WaterPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="collections/gas" element={
+            <ProtectedRoute permission="view:mmc">
+              <GasPage />
             </ProtectedRoute>
           } />
 

@@ -24,7 +24,8 @@ var Config = (function () {
   // Tab names
   var TABS = {
     INCOME_EXPENSE: 'Income_Expense',
-    MMC:            'MMC',
+    MMC:            'Pending MMC',  // formula-driven display tab (read-only from app)
+    MMC_WRITE:      'MMC',          // payment recording tab (app writes here)
     USER_ROLES:     'UserRoles',
     MAPPING_DATA:   'Mapping_Data',
     CATEGORY_DATA:  'Category_Data',
@@ -87,15 +88,32 @@ var Config = (function () {
 
   // ---------------------------------------------------------------------------
   // MMC column indices (0-based)
-  // Actual sheet: Sl.No | Owner | Type | Apartment | (E,F,G skipped) | Apr-2026 …
+  // Sheet: Sl.No(A) | Owner(B) | Type(C) | Apt(D) | Total Due(E) |
+  //        Due FY16-17(F) … Due FYcurrent(dynamic) | Apr-YYYY … Mar-YYYY (12 monthly cols)
+  // Monthly payment columns start right after the current-FY due column.
+  // Use _getMonthsStartCol(fy) in MMCService to compute the offset dynamically.
   // ---------------------------------------------------------------------------
   var MMC_COLS = {
     SL_NO:        0,  // A
     OWNER:        1,  // B
     TYPE:         2,  // C
     APARTMENT:    3,  // D
+    TOTAL_DUE:    4,  // E — cumulative total outstanding
+    FY_DUE_BASE:  5,  // F — first "Due FY" column (Due FY16-17)
+    FY_BASE_YEAR: 16, // the start-year of the first Due FY column (FY16-17 → 16)
+  };
+
+  // ---------------------------------------------------------------------------
+  // MMC_WRITE column indices (0-based) — for the "MMC" payment-recording tab
+  // Sheet: Sl.No(A) | Owner(B) | Type(C) | Apt(D) | skip(E,F,G) | Apr-YYYY(H) … Mar-YYYY(S)
+  // ---------------------------------------------------------------------------
+  var MMC_WRITE_COLS = {
+    SL_NO:        0,  // A
+    OWNER:        1,  // B
+    TYPE:         2,  // C
+    APARTMENT:    3,  // D
     // E(4), F(5), G(6) — skipped
-    MONTHS_START: 7,  // H onwards — month columns (Apr-2026, May-2026 …)
+    MONTHS_START: 7,  // H onwards — monthly payment columns
   };
 
   // ---------------------------------------------------------------------------
@@ -157,6 +175,7 @@ var Config = (function () {
     TABS: TABS,
     IE_COLS: IE_COLS,
     MMC_COLS: MMC_COLS,
+    MMC_WRITE_COLS: MMC_WRITE_COLS,
     MAPPING_COLS: MAPPING_COLS,
     CONFIG_COLS:  CONFIG_COLS,
     RESIDENT_COLS: RESIDENT_COLS,

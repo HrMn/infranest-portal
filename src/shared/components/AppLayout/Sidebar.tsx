@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2 } from 'lucide-react'
+import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2, Layers } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { hasPermission } from '@/shared/utils/constants'
@@ -40,6 +40,18 @@ const NAV_ENTRIES: NavEntry[] = [
       { type: 'leaf', key: '/financials/reports',      icon: <FileBarChart2   className="h-4 w-4" />, label: 'Reports',      permission: 'view:transactions' },
     ],
   },
+  {
+    type: 'group',
+    key: 'collections',
+    icon: <Layers className="h-4 w-4" />,
+    label: 'Collections',
+    permission: 'view:mmc',
+    children: [
+      { type: 'leaf', key: '/collections/mmc',   icon: <Wallet        className="h-4 w-4" />, label: 'MMC',   permission: 'view:mmc' },
+      { type: 'leaf', key: '/collections/water',  icon: <Layers        className="h-4 w-4" />, label: 'Water', permission: 'view:mmc' },
+      { type: 'leaf', key: '/collections/gas',    icon: <Layers        className="h-4 w-4" />, label: 'Gas',   permission: 'view:mmc' },
+    ],
+  },
   { type: 'leaf', key: '/config', icon: <Settings2 className="h-4 w-4" />, label: 'Configuration', permission: 'manage:config' },
 ]
 
@@ -51,7 +63,11 @@ export function Sidebar() {
   const setMobileSidebarOpen = useAppStore((s) => s.setMobileSidebarOpen)
   const user                 = useAuthStore((s) => s.user)
 
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(['financials']))
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    const initial = new Set(['financials'])
+    if (window.location.pathname.startsWith('/collections')) initial.add('collections')
+    return initial
+  })
 
   function canSee(permission?: Permission) {
     if (!permission) return true
