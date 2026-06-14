@@ -387,7 +387,7 @@ export function DashboardPage() {
                       const { x, y, payload } = props
                       const isSelected = Number(payload.value) === drillDay
                       return (
-                        <text x={x} y={y + 10} textAnchor="middle" fontSize={11}
+                        <text x={x} y={+y + 10} textAnchor="middle" fontSize={11}
                           fontWeight={isSelected ? 700 : 400}
                           fill={isSelected ? 'hsl(var(--primary))' : '#888'}>
                           {payload.value}
@@ -407,10 +407,10 @@ export function DashboardPage() {
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                   <Bar dataKey="income"  name="Income"  fill="#10b981" radius={[3,3,0,0]} maxBarSize={24}
-                    onClick={(row: { day: number }) => setDrillDay(row.day)}
+                    onClick={(row: any) => setDrillDay(row.day)}
                   />
                   <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[3,3,0,0]} maxBarSize={24}
-                    onClick={(row: { day: number }) => setDrillDay(row.day)}
+                    onClick={(row: any) => setDrillDay(row.day)}
                   />
                 </BarChart>
               </div>

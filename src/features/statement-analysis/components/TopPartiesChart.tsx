@@ -89,7 +89,7 @@ function PartyList({ parties, direction, onSelect }: PartyListProps) {
             showInfo={false}
             strokeColor={gradient}
             trailColor="#f0f0f0"
-            size={[undefined, 6]}
+            size={['100%', 6]}
           />
         </div>
       ))}

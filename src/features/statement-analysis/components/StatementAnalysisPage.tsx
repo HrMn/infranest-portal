@@ -21,7 +21,7 @@ const DEFAULT_FILTER: AnalysisFilter = {
 }
 
 export function StatementAnalysisPage() {
-  const { files, rows, loading, error, loadFromDb } = useStatementAnalysisStore()
+  const { rows, loading, error, loadFromDb } = useStatementAnalysisStore()
   const [filter, setFilter] = useState<AnalysisFilter>(DEFAULT_FILTER)
 
   // Load persisted data once on mount

@@ -52,7 +52,7 @@ export function useCreateTransactionDynamic() {
 
   return useMutation({
     mutationFn: (payload: TransactionCreatePayload & { fy: string }) =>
-      gasClient.post<{ rowIndex: number }>('createTransaction', payload, token),
+      gasClient.post<{ rowIndex: number }>('createTransaction', payload as unknown as Record<string, unknown>, token),
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: txnKey(vars.fy) }),
   })
 }

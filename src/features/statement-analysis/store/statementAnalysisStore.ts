@@ -22,7 +22,7 @@ interface StatementAnalysisStore {
   removeStatement: (fileId: number) => Promise<void>
 }
 
-export const useStatementAnalysisStore = create<StatementAnalysisStore>((set, get) => ({
+export const useStatementAnalysisStore = create<StatementAnalysisStore>((set, _get) => ({
   files:   [],
   rows:    [],
   loading: false,
@@ -50,11 +50,6 @@ export const useStatementAnalysisStore = create<StatementAnalysisStore>((set, ge
       await dbSaveRows(rowsWithFileId)
 
       const savedFile: AnalysisFile = { ...fileMeta, id: fileId }
-      const savedRows: AnalysisRow[] = rowsWithFileId.map((r, i) => ({
-        ...r,
-        id: i, // placeholder; actual ids from DB are not needed for in-memory use
-      }))
-
       // Reload rows from DB so IDs are accurate
       const allRows = await dbGetAllRows()
       set((s) => ({

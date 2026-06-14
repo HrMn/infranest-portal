@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Card, Checkbox, Select, DatePicker, InputNumber,
+  Card, Select, DatePicker, InputNumber,
   Radio, Space, Button, Divider, Segmented, Tooltip, Tag,
 } from 'antd'
 import { FilterOutlined, ClearOutlined } from '@ant-design/icons'

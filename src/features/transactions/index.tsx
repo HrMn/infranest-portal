@@ -21,7 +21,7 @@ import { TransactionExpandedPanel } from './components/TransactionExpandedPanel'
 import { AddTransactionModal } from './components/AddTransactionModal'
 import { FYSelector } from '@/shared/components/AppLayout/FYSelector'
 import { useConfigData } from '@/features/config/hooks/useConfig'
-import { useUpdateTransaction, useVerifyTransaction } from './hooks/useTransactions'
+import { useVerifyTransaction } from './hooks/useTransactions'
 
 const MONTH_OPTIONS = [
   { value: '04', label: 'April' },    { value: '05', label: 'May' },
@@ -219,12 +219,12 @@ export function TransactionsPage() {
             <ToggleGroup
               value={typeFilter}
               options={TYPE_OPTIONS}
-              onChange={(v) => handleFilterChange(setTypeFilter, v)}
+              onChange={(v) => { setTypeFilter(v as TypeFilter); setPage(1) }}
             />
             <ToggleGroup
               value={modeFilter}
               options={MODE_OPTIONS}
-              onChange={(v) => handleFilterChange(setModeFilter, v)}
+              onChange={(v) => { setModeFilter(v as ModeFilter); setPage(1) }}
             />
             {(sortCol !== 'date' || sortDir !== 'desc') && (
               <button
