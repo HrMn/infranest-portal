@@ -125,6 +125,10 @@ function _route(action, e, principal) {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(MMCService.getStatus(fy));
 
+    case 'getMMCPaid':
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      return ResponseHelper.success(MMCService.getPaid(fy));
+
     case 'updateMMCPayment': {
       AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');

@@ -141,6 +141,106 @@ var MMCService = (function () {
     };
   }
 
+  // Read the raw MMC payment tab ("MMC") and return what has actually been paid.
+  // Returns null for empty cells (nothing recorded), positive number for payments.
+  function getPaid(fy) {
+    var sheet = Config.getFinancialsSheet(fy, Config.TABS.MMC_WRITE);
+    if (!sheet) return { months: [], apartments: [], summary: {} };
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return { months: [], apartments: [], summary: {} };
+
+    var headerRow = data[0];
+    var C = Config.MMC_WRITE_COLS;
+
+    // Read month headers starting at H (index 7), cap at 12
+    var months = [];
+    for (var col = C.MONTHS_START; col < headerRow.length && months.length < 12; col++) {
+      var h = headerRow[col];
+      if (h instanceof Date) {
+        h = Utils.monthLabel(h);
+      } else {
+        h = String(h || '').trim();
+      }
+      if (h) months.push(h);
+    }
+
+    var apartments = [];
+    var totalCollected = 0;
+    var totalRows = 0;
+    var DATA_LAST_IDX = 61;
+
+    for (var i = 1; i < data.length && i <= DATA_LAST_IDX; i++) {
+      var row = data[i];
+      if (!row[C.APARTMENT]) continue;
+
+      totalRows++;
+      var owner = String(row[C.OWNER]     || '').trim();
+      var type  = String(row[C.TYPE]      || '').trim();
+      var apt   = String(row[C.APARTMENT] || '').trim();
+
+      var payments = {};
+      var totalPaid = 0;
+      for (var m = 0; m < months.length; m++) {
+        var colIdx = C.MONTHS_START + m;
+        var val = Utils.parseNumber(row[colIdx]);
+        // null (empty cell) or 0 → not paid; >0 → actual payment
+        var paid = (val !== null && val > 0) ? val : null;
+        payments[months[m]] = paid;
+        if (paid) totalPaid += paid;
+      }
+
+      totalCollected += totalPaid;
+      apartments.push({
+        slNo:      Utils.parseNumber(row[C.SL_NO]) || i,
+        owner:     owner,
+        type:      type,
+        apartment: apt,
+        totalPaid: totalPaid,
+        payments:  payments,
+      });
+    }
+
+    // collectedThisFY: payments for months up to and including the current calendar month
+    var now = new Date();
+    var thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    var collectedThisFY = 0;
+    for (var ai = 0; ai < apartments.length; ai++) {
+      for (var mi2 = 0; mi2 < months.length; mi2++) {
+        var md = _parseMonthLabel(months[mi2]);
+        if (md && md <= thisMonthStart) {
+          var v = apartments[ai].payments[months[mi2]];
+          if (v && v > 0) collectedThisFY += v;
+        }
+      }
+    }
+
+    // currentMonth: latest month where at least one apartment has a payment recorded
+    var currentMonth = months[months.length - 1] || '';
+    for (var mi = months.length - 1; mi >= 0; mi--) {
+      var hasPaid = apartments.some(function (a) {
+        return a.payments[months[mi]] !== null && a.payments[months[mi]] > 0;
+      });
+      if (hasPaid) { currentMonth = months[mi]; break; }
+    }
+
+    var paidThisMonth = apartments.filter(function (a) {
+      return a.payments[currentMonth] !== null && a.payments[currentMonth] > 0;
+    }).length;
+
+    return {
+      months:     months,
+      apartments: apartments,
+      summary: {
+        totalApartments:  totalRows,
+        totalCollected:   totalCollected,
+        collectedThisFY:  collectedThisFY,
+        paidThisMonth:    paidThisMonth,
+        currentMonth:     currentMonth,
+      },
+    };
+  }
+
   // Record a monthly payment for a given apartment.
   // Writes to the "MMC" payment tab (NOT Pending MMC which is formula-driven).
   // amount=0 clears the cell; positive value writes the payment.
@@ -177,6 +277,7 @@ var MMCService = (function () {
 
   return {
     getStatus:     getStatus,
+    getPaid:       getPaid,
     recordPayment: recordPayment,
   };
 

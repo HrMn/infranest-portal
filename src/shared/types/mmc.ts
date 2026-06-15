@@ -1,3 +1,24 @@
+export interface MMCPaidApartment {
+  slNo: number
+  owner: string
+  type: string
+  apartment: string
+  totalPaid: number
+  payments: Record<string, number | null>  // null = nothing recorded, >0 = amount paid
+}
+
+export interface MMCPaid {
+  months: string[]
+  apartments: MMCPaidApartment[]
+  summary: {
+    totalApartments: number
+    totalCollected: number
+    collectedThisFY: number
+    paidThisMonth: number
+    currentMonth: string
+  }
+}
+
 export interface MMCApartment {
   slNo: number
   owner: string

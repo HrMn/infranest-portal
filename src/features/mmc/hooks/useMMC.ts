@@ -2,14 +2,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/shared/store/authStore'
 import { gasClient } from '@/shared/services/gasClient'
 import { useGasQuery } from '@/shared/hooks/useGasQuery'
-import type { MMCStatus } from '@/shared/types'
+import type { MMCStatus, MMCPaid } from '@/shared/types'
 
-function mmcKey(fy: string): unknown[] {
-  return ['mmc', fy]
-}
+function mmcStatusKey(fy: string): unknown[] { return ['mmc-status', fy] }
+function mmcPaidKey(fy: string):   unknown[] { return ['mmc-paid',   fy] }
 
 export function useMMCStatus(fy: string) {
-  return useGasQuery<MMCStatus>(mmcKey(fy), 'getMMCStatus', { fy })
+  return useGasQuery<MMCStatus>(mmcStatusKey(fy), 'getMMCStatus', { fy })
+}
+
+export function useMMCPaid(fy: string) {
+  return useGasQuery<MMCPaid>(mmcPaidKey(fy), 'getMMCPaid', { fy })
 }
 
 export function useUpdateMMCPayment(fy: string) {
@@ -19,6 +22,10 @@ export function useUpdateMMCPayment(fy: string) {
   return useMutation({
     mutationFn: (payload: { apartment: string; month: string; amount: number }) =>
       gasClient.post<{ ok: boolean }>('updateMMCPayment', { ...payload, fy } as unknown as Record<string, unknown>, token),
-    onSuccess: () => qc.invalidateQueries({ queryKey: mmcKey(fy) }),
+    onSuccess: () => {
+      // Writing to MMC tab affects both paid view (direct) and dues view (via Pending MMC formulas)
+      qc.invalidateQueries({ queryKey: mmcStatusKey(fy) })
+      qc.invalidateQueries({ queryKey: mmcPaidKey(fy) })
+    },
   })
 }
