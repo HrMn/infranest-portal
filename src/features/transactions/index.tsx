@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAppStore } from '@/shared/store/appStore'
 import { useTransactions } from './hooks/useTransactions'
 import { useAuthStore } from '@/shared/store/authStore'
@@ -81,6 +81,19 @@ export function TransactionsPage() {
   const [modeFilter,      setModeFilter]      = useState<ModeFilter>('all')
   const [sortCol,         setSortCol]         = useState<SortCol>('date')
   const [sortDir,         setSortDir]         = useState<SortDir>('desc')
+
+  useEffect(() => {
+    setSearch('')
+    setMonthFilter([])
+    setCategoryFilter([])
+    setTypeFilter('all')
+    setModeFilter('all')
+    setSortCol('date')
+    setSortDir('desc')
+    setPage(1)
+    setExpandedRowIdx(null)
+  }, [fy])
+
   const categoryOptions = useMemo(() => {
     const cats = new Set<string>()
     ;(transactions ?? []).forEach((t) => { if (t.paymentType) cats.add(t.paymentType) })
@@ -286,7 +299,7 @@ export function TransactionsPage() {
                 ) : (
                   paginated.map((t) => (
                     <TransactionRow
-                      key={t.transactionId || t.rowIndex}
+                      key={`${fy}-${t.rowIndex}`}
                       txn={t}
                       fy={fy}
                       canEdit={canEdit}
