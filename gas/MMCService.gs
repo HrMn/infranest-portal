@@ -275,10 +275,48 @@ var MMCService = (function () {
     sheet.getRange(aptRowIdx + 1, monthColIdx + 1).setValue(cellValue);
   }
 
+  // Read the MMC Rate sheet and return all revision blocks.
+  // Each block starts with a header row where column C contains "Revised MMC (From ...)".
+  // The following 6 rows are apartment-type rate data (columns B, C, D).
+  // Returns revisions newest-first so the caller can treat revisions[0] as current.
+  function getRates(fy) {
+    var sheet = Config.getFinancialsSheet(fy, Config.TABS.MMC_RATE);
+    if (!sheet) return { revisions: [] };
+
+    var data = sheet.getDataRange().getValues();
+    var revisions = [];
+
+    for (var i = 0; i < data.length; i++) {
+      var cellC = String(data[i][2] || '').trim(); // column C
+      if (/revised mmc/i.test(cellC)) {
+        // Extract "Month Year" from "Revised MMC (From Month Year)"
+        var effectiveFrom = cellC.replace(/.*from\s*/i, '').replace(/[\(\)]/g, '').trim();
+
+        var rates = [];
+        for (var j = i + 1; j < data.length && j <= i + 6; j++) {
+          var aptType = String(data[j][1] || '').trim(); // column B
+          var amount  = Utils.parseNumber(data[j][2]);   // column C
+          var revenue = Utils.parseNumber(data[j][3]);   // column D
+          if (aptType) {
+            rates.push({ aptType: aptType, amount: amount, revenue: revenue });
+          }
+        }
+
+        if (rates.length > 0) {
+          revisions.push({ effectiveFrom: effectiveFrom, rates: rates });
+        }
+      }
+    }
+
+    revisions.reverse(); // newest first
+    return { revisions: revisions };
+  }
+
   return {
     getStatus:     getStatus,
     getPaid:       getPaid,
     recordPayment: recordPayment,
+    getRates:      getRates,
   };
 
 })();

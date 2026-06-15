@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/shared/store/authStore'
 import { gasClient } from '@/shared/services/gasClient'
 import { useGasQuery } from '@/shared/hooks/useGasQuery'
-import type { MMCStatus, MMCPaid } from '@/shared/types'
+import type { MMCStatus, MMCPaid, MMCRates } from '@/shared/types'
 
 function mmcStatusKey(fy: string): unknown[] { return ['mmc-status', fy] }
 function mmcPaidKey(fy: string):   unknown[] { return ['mmc-paid',   fy] }
@@ -13,6 +13,10 @@ export function useMMCStatus(fy: string) {
 
 export function useMMCPaid(fy: string) {
   return useGasQuery<MMCPaid>(mmcPaidKey(fy), 'getMMCPaid', { fy })
+}
+
+export function useMMCRates(fy: string) {
+  return useGasQuery<MMCRates>(['mmc-rates', fy], 'getMMCRates', { fy })
 }
 
 export function useUpdateMMCPayment(fy: string) {

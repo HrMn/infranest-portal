@@ -1,3 +1,18 @@
+export interface MMCRateRow {
+  aptType: string
+  amount:  number | null
+  revenue: number | null
+}
+
+export interface MMCRateRevision {
+  effectiveFrom: string
+  rates: MMCRateRow[]
+}
+
+export interface MMCRates {
+  revisions: MMCRateRevision[]
+}
+
 export interface MMCPaidApartment {
   slNo: number
   owner: string

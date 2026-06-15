@@ -26,6 +26,7 @@ var Config = (function () {
     INCOME_EXPENSE: 'Income_Expense',
     MMC:            'Pending MMC',  // formula-driven display tab (read-only from app)
     MMC_WRITE:      'MMC',          // payment recording tab (app writes here)
+    MMC_RATE:       'MMC Rate',     // rate card history tab (read-only)
     USER_ROLES:     'UserRoles',
     MAPPING_DATA:   'Mapping_Data',
     CATEGORY_DATA:  'Category_Data',

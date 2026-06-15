@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Pencil, IndianRupee, CalendarCheck, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown, TrendingUp } from 'lucide-react'
+import { Search, Pencil, IndianRupee, CalendarCheck, AlertCircle, ChevronUp, ChevronDown, ChevronsUpDown, TrendingUp, Receipt } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import { useMMCStatus, useMMCPaid, useUpdateMMCPayment } from './hooks/useMMC'
+import { MMCRateModal } from './components/MMCRateModal'
 import { useAppStore } from '@/shared/store/appStore'
 import { usePermission } from '@/shared/hooks/usePermission'
 import { formatCurrency } from '@/shared/utils/formatters'
@@ -58,12 +59,13 @@ export function MMCPage() {
   const globalFY = useAppStore((s) => s.selectedFY)
   const canEdit  = usePermission('verify:transaction')
 
-  const [fy,        setFy]        = useState<FiscalYear>(globalFY)
-  const [viewMode,  setViewMode]  = useState<ViewMode>('dues')
-  const [search,    setSearch]    = useState('')
-  const [sort,      setSort]      = useState<SortState | null>(null)
-  const [editCell,  setEditCell]  = useState<EditCell | null>(null)
-  const [editAmount, setEditAmount] = useState('')
+  const [fy,           setFy]          = useState<FiscalYear>(globalFY)
+  const [viewMode,     setViewMode]    = useState<ViewMode>('dues')
+  const [search,       setSearch]      = useState('')
+  const [sort,         setSort]        = useState<SortState | null>(null)
+  const [editCell,     setEditCell]    = useState<EditCell | null>(null)
+  const [editAmount,   setEditAmount]  = useState('')
+  const [rateCardOpen, setRateCardOpen] = useState(false)
 
   // Prefetch both so switching views is instant
   const { data: duesData, isLoading: duesLoading } = useMMCStatus(fy)
@@ -201,8 +203,21 @@ export function MMCPage() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Rate Card */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setRateCardOpen(true)}
+          >
+            <Receipt className="h-3.5 w-3.5" />
+            Rate Card
+          </Button>
         </div>
       </div>
+
+      <MMCRateModal open={rateCardOpen} fy={fy} onClose={() => setRateCardOpen(false)} />
 
       {/* KPI strip — dues view */}
       {viewMode === 'dues' && (
