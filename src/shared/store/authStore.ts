@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { AuthUser } from '@/shared/types'
 
 interface AuthState {
@@ -9,10 +10,19 @@ interface AuthState {
   logout: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isLoading: false,
-  setUser: (user) => set({ user }),
-  setLoading: (isLoading) => set({ isLoading }),
-  logout: () => set({ user: null }),
-}))
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isLoading: false,
+      setUser: (user) => set({ user }),
+      setLoading: (isLoading) => set({ isLoading }),
+      logout: () => set({ user: null }),
+    }),
+    {
+      name: 'infranest-auth',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ user: state.user }),
+    },
+  )
+)
