@@ -214,7 +214,7 @@ function _route(action, e, principal) {
 
     case 'getAptMapping': {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
-      var sheet = Config.getFinancialsSheet(fy, Config.TABS.MAPPING_DATA);
+      var sheet = Config.getLookupSheet(Config.TABS.MAPPING_DATA);
       if (!sheet) return ResponseHelper.success({ mappings: [] });
       var data = sheet.getDataRange().getValues();
       var mappings = [];
@@ -231,7 +231,7 @@ function _route(action, e, principal) {
     // ---- Config / Master Data ----
     case 'getConfigData': {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
-      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      var sheet = Config.getLookupSheet(Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.success({ items: [] });
       var data = sheet.getDataRange().getValues();
       var filterType = p.configType || '';
@@ -250,7 +250,7 @@ function _route(action, e, principal) {
     case 'upsertConfigItem': {
       AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');
-      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      var sheet = Config.getLookupSheet(Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');
       if (payload.rowIndex) {
         sheet.getRange(payload.rowIndex, 1, 1, 3).setValues([[payload.configType, payload.key, payload.status || 'Active']]);
@@ -263,7 +263,7 @@ function _route(action, e, principal) {
     case 'deleteConfigItem': {
       AuthGuard.requirePrivilege(principal, MANAGE_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');
-      var sheet = Config.getFinancialsSheet(fy, Config.TABS.CATEGORY_DATA);
+      var sheet = Config.getLookupSheet(Config.TABS.CATEGORY_DATA);
       if (!sheet) return ResponseHelper.error('NOT_FOUND', 'Category_Data sheet not found');
       sheet.deleteRow(payload.rowIndex);
       return ResponseHelper.success({ ok: true });

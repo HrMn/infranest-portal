@@ -19,8 +19,8 @@ var UserService = (function () {
     return DISPLAY_ROLE_TO_PRIVILEGE[displayRole] || 'Guest';
   }
 
-  function _getSheet(fy) {
-    return Config.getFinancialsSheet(fy || Config.DEFAULT_FY, Config.TABS.USER_ROLES);
+  function _getSheet() {
+    return Config.getStakeholdersSheet(Config.TABS.USER_ROLES);
   }
 
   function _rowToUser(row) {

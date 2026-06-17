@@ -4,11 +4,13 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from 'recharts'
+import { useQueries } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useTransactions } from '@/features/transactions/hooks/useTransactions'
+import { gasClient } from '@/shared/services/gasClient'
+import { useAuthStore } from '@/shared/store/authStore'
 import { formatCurrency } from '@/shared/utils/formatters'
 import { FISCAL_YEARS, FY_MONTHS, DEFAULT_FY } from '@/shared/utils/constants'
 import type { FiscalYear } from '@/shared/utils/constants'
@@ -157,20 +159,23 @@ export function DashboardPage() {
   const [drillMonth,  setDrillMonth]  = useState<string | null>(null)
   const [drillDay,    setDrillDay]    = useState<number | null>(null)
 
-  // Always fetch both FYs; TanStack Query deduplicates/caches automatically
-  const q26 = useTransactions('FY26-27')
-  const q25 = useTransactions('FY25-26')
+  const token = useAuthStore((s) => s.user?.idToken ?? '')
 
-  const isLoading =
-    (selectedFYs.includes('FY26-27') && q26.isLoading) ||
-    (selectedFYs.includes('FY25-26') && q25.isLoading)
+  const fyResults = useQueries({
+    queries: selectedFYs.map((fy) => ({
+      queryKey: ['transactions', fy, { fy }],
+      queryFn: () => gasClient.get<Transaction[]>('getTransactions', { fy }, token),
+      enabled: !!token,
+      staleTime: 5 * 60 * 1000,
+    })),
+  })
 
-  const transactions = useMemo<Transaction[]>(() => {
-    const list: Transaction[] = []
-    if (selectedFYs.includes('FY26-27') && q26.data) list.push(...q26.data)
-    if (selectedFYs.includes('FY25-26') && q25.data) list.push(...q25.data)
-    return list
-  }, [selectedFYs, q26.data, q25.data])
+  const isLoading = fyResults.some((r) => r.isLoading)
+
+  const transactions = useMemo<Transaction[]>(
+    () => fyResults.flatMap((r) => r.data ?? []),
+    [fyResults],
+  )
 
   const months = useMemo(
     () => selectedFYs.flatMap((fy) => FY_MONTHS[fy as FiscalYear] ?? []),
@@ -249,7 +254,7 @@ export function DashboardPage() {
   }, [categoryTransactions])
 
   function handleFyChange(v: string[]) {
-    setSelectedFYs(v.length ? v : [DEFAULT_FY])
+    setSelectedFYs(v)
     setDrillMonth(null)
     setDrillDay(null)
   }
@@ -365,7 +370,11 @@ export function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {drillMonth ? (
+          {selectedFYs.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Select a fiscal year above to see data
+            </p>
+          ) : drillMonth ? (
             dailyData.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">No transactions in {drillMonth}</p>
             ) : (

@@ -6,18 +6,34 @@ var Config = (function () {
 
   // ---------------------------------------------------------------------------
   // Sheet Registry: map FY → Spreadsheet IDs
-  // Replace these with actual Google Sheets file IDs from your Drive
+  // Replace placeholder values with the actual Google Sheets file IDs from Drive.
+  //
+  // Global tabs live in dedicated sheets outside the FY spreadsheets:
+  //   UserRoles       → Association_Stakeholders (getStakeholdersSheet)
+  //   Category_Data,
+  //   Mapping_Data    → Financials_Lookup        (getLookupSheet)
+  //
+  // Residents data does not change per FY — getResidentsSheet() always reads
+  // from the GLOBAL_RESIDENTS_ID defined below.
   // ---------------------------------------------------------------------------
   var SHEET_REGISTRY = {
-    'FY26-27': {
-      financialsId: 'REPLACE_WITH_FINANCIALS_FY26_27_SHEET_ID',
-      residentsId:  'REPLACE_WITH_RESIDENTS_SHEET_ID',
-    },
-    'FY25-26': {
-      financialsId: 'REPLACE_WITH_FINANCIALS_FY25_26_SHEET_ID',
-      residentsId:  'REPLACE_WITH_RESIDENTS_SHEET_ID',
-    },
+    'FY26-27': { financialsId: 'REPLACE_WITH_FINANCIALS_FY26_27_SHEET_ID' },
+    'FY25-26': { financialsId: 'REPLACE_WITH_FINANCIALS_FY25_26_SHEET_ID' },
+    'FY24-25': { financialsId: 'REPLACE_WITH_FINANCIALS_FY24_25_SHEET_ID' },
+    'FY23-24': { financialsId: 'REPLACE_WITH_FINANCIALS_FY23_24_SHEET_ID' },
+    'FY22-23': { financialsId: 'REPLACE_WITH_FINANCIALS_FY22_23_SHEET_ID' },
+    'FY21-22': { financialsId: 'REPLACE_WITH_FINANCIALS_FY21_22_SHEET_ID' },
+    'FY20-21': { financialsId: 'REPLACE_WITH_FINANCIALS_FY20_21_SHEET_ID' },
   };
+
+  // Residents sheet is shared across all FYs (owners/tenants don't change per FY).
+  var GLOBAL_RESIDENTS_ID = 'REPLACE_WITH_RESIDENTS_SHEET_ID';
+
+  // Association_Stakeholders sheet — holds UserRoles tab (shared across all FYs).
+  var GLOBAL_STAKEHOLDERS_ID = 'REPLACE_WITH_STAKEHOLDERS_SHEET_ID';
+
+  // Financials_Lookup sheet — holds Category_Data and Mapping_Data tabs (shared across all FYs).
+  var GLOBAL_LOOKUP_ID = 'REPLACE_WITH_LOOKUP_SHEET_ID';
 
   var DEFAULT_FY = 'FY26-27';
 
@@ -155,21 +171,31 @@ var Config = (function () {
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
-  function getSheetIds(fy) {
-    return SHEET_REGISTRY[fy || DEFAULT_FY] || SHEET_REGISTRY[DEFAULT_FY];
-  }
-
   function getFinancialsSheet(fy, tabName) {
-    var ids = getSheetIds(fy);
-    var ss = SpreadsheetApp.openById(ids.financialsId);
+    var entry = SHEET_REGISTRY[fy || DEFAULT_FY] || SHEET_REGISTRY[DEFAULT_FY];
+    var ss = SpreadsheetApp.openById(entry.financialsId);
     return ss.getSheetByName(tabName);
   }
 
-  function getResidentsSheet(fy) {
-    var ids = getSheetIds(fy);
-    var ss = SpreadsheetApp.openById(ids.residentsId);
-    // Residents sheet uses its first/only sheet
+  // Always reads from the DEFAULT_FY (FY26-27) spreadsheet.
+  // Use for global tabs: UserRoles, Mapping_Data, Category_Data.
+  function getGlobalSheet(tabName) {
+    return getFinancialsSheet(DEFAULT_FY, tabName);
+  }
+
+  function getResidentsSheet() {
+    var ss = SpreadsheetApp.openById(GLOBAL_RESIDENTS_ID);
     return ss.getSheets()[0];
+  }
+
+  function getStakeholdersSheet(tabName) {
+    var ss = SpreadsheetApp.openById(GLOBAL_STAKEHOLDERS_ID);
+    return ss.getSheetByName(tabName);
+  }
+
+  function getLookupSheet(tabName) {
+    var ss = SpreadsheetApp.openById(GLOBAL_LOOKUP_ID);
+    return ss.getSheetByName(tabName);
   }
 
   return {
@@ -184,9 +210,11 @@ var Config = (function () {
     PAYMENT_MODES: PAYMENT_MODES,
     TXN_SOURCE: TXN_SOURCE,
     DEFAULT_FY: DEFAULT_FY,
-    getSheetIds: getSheetIds,
     getFinancialsSheet: getFinancialsSheet,
+    getGlobalSheet: getGlobalSheet,
     getResidentsSheet: getResidentsSheet,
+    getStakeholdersSheet: getStakeholdersSheet,
+    getLookupSheet: getLookupSheet,
   };
 
 })();

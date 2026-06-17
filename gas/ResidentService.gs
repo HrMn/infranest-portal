@@ -32,7 +32,7 @@ var ResidentService = (function () {
   }
 
   function getAll(fy, includePII) {
-    var sheet = Config.getResidentsSheet(fy);
+    var sheet = Config.getResidentsSheet();
     if (!sheet) return [];
     var data = sheet.getDataRange().getValues();
     var residents = [];
