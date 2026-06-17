@@ -133,6 +133,15 @@ function _route(action, e, principal) {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(MMCService.getRates(fy));
 
+    // ---- Financial Summary ----
+    case 'getFinancialSummary':
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      return ResponseHelper.success(FinancialSummaryService.getOverallSummary());
+
+    case 'getFinancialSummaryDetail':
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      return ResponseHelper.success(FinancialSummaryService.getFYDetail(p.fyLabel || ''));
+
     case 'updateMMCPayment': {
       AuthGuard.requirePrivilege(principal, VERIFY_PRIVS);
       var payload = JSON.parse(e.postData.contents || '{}');

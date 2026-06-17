@@ -6,6 +6,7 @@ export const TOTAL_APARTMENTS = 61
 
 export const FISCAL_YEARS = [
   'FY26-27', 'FY25-26', 'FY24-25', 'FY23-24', 'FY22-23', 'FY21-22', 'FY20-21',
+  'FY19-20', 'FY18-19'
 ] as const
 export type FiscalYear = (typeof FISCAL_YEARS)[number]
 export const DEFAULT_FY: FiscalYear = 'FY26-27'
@@ -39,6 +40,14 @@ export const FY_MONTHS: Record<FiscalYear, string[]> = {
     'Apr-2020', 'May-2020', 'Jun-2020', 'Jul-2020', 'Aug-2020', 'Sep-2020',
     'Oct-2020', 'Nov-2020', 'Dec-2020', 'Jan-2021', 'Feb-2021', 'Mar-2021',
   ],
+  'FY19-20': [
+    'Apr-2019', 'May-2019', 'Jun-2019', 'Jul-2019', 'Aug-2019', 'Sep-2019',
+    'Oct-2019', 'Nov-2019', 'Dec-2019', 'Jan-2020', 'Feb-2020', 'Mar-2020',
+  ],
+  'FY18-19': [
+    'Apr-2018', 'May-2018', 'Jun-2018', 'Jul-2018', 'Aug-2018', 'Sep-2018',
+    'Oct-2018', 'Nov-2018', 'Dec-2018', 'Jan-2019', 'Feb-2019', 'Mar-2019',
+  ]
 }
 
 export const INCOME_CATEGORIES = [

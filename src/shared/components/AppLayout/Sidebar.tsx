@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2, Layers } from 'lucide-react'
+import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2, Layers, BookOpen } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { hasPermission } from '@/shared/utils/constants'
@@ -36,6 +36,7 @@ const NAV_ENTRIES: NavEntry[] = [
     permission: 'view:transactions',
     children: [
       { type: 'leaf', key: '/financials/dashboard',    icon: <LayoutDashboard className="h-4 w-4" />, label: 'Dashboard',    permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/summary',      icon: <BookOpen        className="h-4 w-4" />, label: 'Summary',      permission: 'view:transactions' },
       { type: 'leaf', key: '/financials/transactions', icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions', permission: 'view:transactions' },
       { type: 'leaf', key: '/financials/reports',      icon: <FileBarChart2   className="h-4 w-4" />, label: 'Reports',      permission: 'view:transactions' },
     ],

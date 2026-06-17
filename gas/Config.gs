@@ -24,6 +24,9 @@ var Config = (function () {
     'FY22-23': { financialsId: 'REPLACE_WITH_FINANCIALS_FY22_23_SHEET_ID' },
     'FY21-22': { financialsId: 'REPLACE_WITH_FINANCIALS_FY21_22_SHEET_ID' },
     'FY20-21': { financialsId: 'REPLACE_WITH_FINANCIALS_FY20_21_SHEET_ID' },
+    'FY19-20': { financialsId: 'REPLACE_WITH_FINANCIALS_FY19_20_SHEET_ID' },
+    'FY18-19': { financialsId: 'REPLACE_WITH_FINANCIALS_FY18_19_SHEET_ID' },
+    'FY17-18': { financialsId: 'REPLACE_WITH_FINANCIALS_FY17_18_SHEET_ID' },
   };
 
   // Residents sheet is shared across all FYs (owners/tenants don't change per FY).
@@ -31,6 +34,9 @@ var Config = (function () {
 
   // Association_Stakeholders sheet — holds UserRoles tab (shared across all FYs).
   var GLOBAL_STAKEHOLDERS_ID = 'REPLACE_WITH_STAKEHOLDERS_SHEET_ID';
+
+  // Financial_Summary sheet — holds Overall Summary and per-FY cash flow tabs.
+  var FINANCIAL_SUMMARY_ID = 'REPLACE_WITH_FINANCIAL_SUMMARY_SHEET_ID';
 
   // Financials_Lookup sheet — holds Category_Data and Mapping_Data tabs (shared across all FYs).
   var GLOBAL_LOOKUP_ID = 'REPLACE_WITH_LOOKUP_SHEET_ID';
@@ -198,6 +204,11 @@ var Config = (function () {
     return ss.getSheetByName(tabName);
   }
 
+  function getFinancialSummarySheet(tabName) {
+    var ss = SpreadsheetApp.openById(FINANCIAL_SUMMARY_ID);
+    return ss.getSheetByName(tabName);
+  }
+
   return {
     TABS: TABS,
     IE_COLS: IE_COLS,
@@ -215,6 +226,7 @@ var Config = (function () {
     getResidentsSheet: getResidentsSheet,
     getStakeholdersSheet: getStakeholdersSheet,
     getLookupSheet: getLookupSheet,
+    getFinancialSummarySheet: getFinancialSummarySheet,
   };
 
 })();
