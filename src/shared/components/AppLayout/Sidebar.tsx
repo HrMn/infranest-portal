@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2, Layers, BookOpen } from 'lucide-react'
+import { ReceiptText, Settings2, Wallet, LayoutDashboard, ChevronDown, ChevronRight, FileBarChart2, Layers, BookOpen, LandmarkIcon } from 'lucide-react'
 import { useAuthStore } from '@/shared/store/authStore'
 import { useAppStore } from '@/shared/store/appStore'
 import { hasPermission } from '@/shared/utils/constants'
@@ -35,10 +35,11 @@ const NAV_ENTRIES: NavEntry[] = [
     label: 'Financials',
     permission: 'view:transactions',
     children: [
-      { type: 'leaf', key: '/financials/dashboard',    icon: <LayoutDashboard className="h-4 w-4" />, label: 'Dashboard',    permission: 'view:transactions' },
-      { type: 'leaf', key: '/financials/summary',      icon: <BookOpen        className="h-4 w-4" />, label: 'Summary',      permission: 'view:transactions' },
-      { type: 'leaf', key: '/financials/transactions', icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions', permission: 'view:transactions' },
-      { type: 'leaf', key: '/financials/reports',      icon: <FileBarChart2   className="h-4 w-4" />, label: 'Reports',      permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/dashboard',      icon: <LayoutDashboard className="h-4 w-4" />, label: 'Dashboard',       permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/transactions',   icon: <ReceiptText     className="h-4 w-4" />, label: 'Transactions',    permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/summary',        icon: <BookOpen        className="h-4 w-4" />, label: 'Cash Ledger',     permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/bank-statements',icon: <LandmarkIcon    className="h-4 w-4" />, label: 'Bank Statements', permission: 'view:transactions' },
+      { type: 'leaf', key: '/financials/reports',        icon: <FileBarChart2   className="h-4 w-4" />, label: 'Reports',         permission: 'view:transactions' },
     ],
   },
   {

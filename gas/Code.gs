@@ -133,6 +133,40 @@ function _route(action, e, principal) {
       AuthGuard.requirePrivilege(principal, READ_PRIVS);
       return ResponseHelper.success(MMCService.getRates(fy));
 
+    // ---- Bank Statements ----
+    case 'getBankStatementSummary':
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      return ResponseHelper.success(BankStatementService.getYearlySummary());
+
+    case 'debugBankStatements': {
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      var diag = { steps: [], files: [], error: null };
+      try {
+        var pItr = DriveApp.getFoldersByName('Financial');
+        diag.steps.push('Financial folder search done');
+        if (!pItr.hasNext()) { diag.steps.push('Financial folder NOT found'); return ResponseHelper.success(diag); }
+        var pFolder = pItr.next();
+        diag.steps.push('Financial folder found: ' + pFolder.getName());
+        var cItr = pFolder.getFoldersByName('Bank Statements');
+        if (!cItr.hasNext()) { diag.steps.push('Bank Statements subfolder NOT found'); return ResponseHelper.success(diag); }
+        var bsFolder = cItr.next();
+        diag.steps.push('Bank Statements folder found: ' + bsFolder.getName());
+        var fItr = bsFolder.getFiles();
+        while (fItr.hasNext()) {
+          var f = fItr.next();
+          diag.files.push({ name: f.getName(), mimeType: f.getMimeType(), id: f.getId() });
+        }
+        diag.steps.push('Files found: ' + diag.files.length);
+      } catch (ex) {
+        diag.error = ex.message;
+      }
+      return ResponseHelper.success(diag);
+    }
+
+    case 'getBankStatementMonthly':
+      AuthGuard.requirePrivilege(principal, READ_PRIVS);
+      return ResponseHelper.success(BankStatementService.getFYMonthly(p.fyCode || ''));
+
     // ---- Financial Summary ----
     case 'getFinancialSummary':
       AuthGuard.requirePrivilege(principal, READ_PRIVS);

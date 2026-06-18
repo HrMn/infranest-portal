@@ -5,6 +5,7 @@ export * from './resident'
 export * from './report'
 export * from './config'
 export * from './financialSummary'
+export * from './bankStatement'
 
 export interface GasResponse<T> {
   success: boolean

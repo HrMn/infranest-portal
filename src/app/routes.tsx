@@ -6,6 +6,7 @@ import { LoginPage } from '@/features/auth/components/LoginPage'
 
 const DashboardPage            = lazy(() => import('@/features/dashboard').then((m) => ({ default: m.DashboardPage })))
 const FinancialSummaryPage     = lazy(() => import('@/features/financialSummary').then((m) => ({ default: m.FinancialSummaryPage })))
+const BankStatementPage        = lazy(() => import('@/features/bankStatement').then((m) => ({ default: m.BankStatementPage })))
 const ReportsPage           = lazy(() => import('@/features/reports').then((m) => ({ default: m.ReportsPage })))
 const TransactionsPage      = lazy(() => import('@/features/transactions').then((m) => ({ default: m.TransactionsPage })))
 const ConfigPage            = lazy(() => import('@/features/config').then((m) => ({ default: m.ConfigPage })))
@@ -49,6 +50,12 @@ export function AppRoutes() {
           <Route path="financials/summary" element={
             <ProtectedRoute permission="view:transactions">
               <FinancialSummaryPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="financials/bank-statements" element={
+            <ProtectedRoute permission="view:transactions">
+              <BankStatementPage />
             </ProtectedRoute>
           } />
 
