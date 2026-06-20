@@ -23,19 +23,12 @@ const ALL_FYS = [
 
 const CURRENT_FY = 'FY26-27'
 
-const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function yFmt(v: number): string {
   if (v >= 100000) return `₹${(v / 100000).toFixed(1)}L`
   if (v >= 1000)   return `₹${(v / 1000).toFixed(0)}K`
   return `₹${v}`
-}
-
-function monthLabel(key: string) {
-  const [mm, yyyy] = key.split('/')
-  return `${MONTH_ABBR[parseInt(mm) - 1]}-${yyyy}`
 }
 
 
@@ -172,9 +165,9 @@ export function BankStatementPage() {
               <Tooltip content={<GroupedTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
               <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
               <Bar dataKey="openingBalance" name="Opening" fill="#a5b4fc" radius={[4,4,0,0]} maxBarSize={32}
-                style={{ cursor: 'pointer' }} onClick={(d: { fy: string }) => handleYearClick(d.fy)} />
+                style={{ cursor: 'pointer' }} onClick={(d: any) => handleYearClick(d.fy)} />
               <Bar dataKey="closingBalance" name="Closing" fill="#6366f1" radius={[4,4,0,0]} maxBarSize={32}
-                style={{ cursor: 'pointer' }} onClick={(d: { fy: string }) => handleYearClick(d.fy)} />
+                style={{ cursor: 'pointer' }} onClick={(d: any) => handleYearClick(d.fy)} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -209,10 +202,10 @@ export function BankStatementPage() {
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
                 <Bar dataKey="openingBalance" name="Opening" fill="#a5b4fc" radius={[4,4,0,0]} maxBarSize={28}
                   style={{ cursor: 'pointer' }}
-                  onClick={(d: { monthKey: string; month: string }) => handleMonthClick(d.monthKey, d.month)} />
+                  onClick={(d: any) => handleMonthClick(d.monthKey, d.month)} />
                 <Bar dataKey="closingBalance" name="Closing" fill="#6366f1" radius={[4,4,0,0]} maxBarSize={28}
                   style={{ cursor: 'pointer' }}
-                  onClick={(d: { monthKey: string; month: string }) => handleMonthClick(d.monthKey, d.month)} />
+                  onClick={(d: any) => handleMonthClick(d.monthKey, d.month)} />
               </BarChart>
             </ResponsiveContainer>
           )}
