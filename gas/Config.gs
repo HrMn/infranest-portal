@@ -41,6 +41,18 @@ var Config = (function () {
   // Financials_Lookup sheet — holds Category_Data and Mapping_Data tabs (shared across all FYs).
   var GLOBAL_LOOKUP_ID = 'REPLACE_WITH_LOOKUP_SHEET_ID';
 
+  // Bank Statement Google Sheets — one file per FY stored in Drive.
+  // Get the file ID from Drive: open the file → copy the ID from the URL
+  //   https://docs.google.com/spreadsheets/d/<FILE_ID>/edit
+  var BANK_STATEMENT_FILES = {
+    'FY26-27': 'REPLACE_WITH_BANK_STMT_FY26_27_ID',
+    'FY25-26': 'REPLACE_WITH_BANK_STMT_FY25_26_ID',
+    'FY24-25': 'REPLACE_WITH_BANK_STMT_FY24_25_ID',
+    'FY23-24': 'REPLACE_WITH_BANK_STMT_FY23_24_ID',
+    'FY22-23': 'REPLACE_WITH_BANK_STMT_FY22_23_ID',
+    'FY21-22': 'REPLACE_WITH_BANK_STMT_FY21_22_ID',
+  };
+
   var DEFAULT_FY = 'FY26-27';
 
   // Tab names
@@ -209,6 +221,20 @@ var Config = (function () {
     return ss.getSheetByName(tabName);
   }
 
+  function getBankStatementSheet(fyCode) {
+    var id = BANK_STATEMENT_FILES[fyCode];
+    if (!id || id.indexOf('REPLACE') === 0) return null;
+    var ss = SpreadsheetApp.openById(id);
+    return ss.getSheets()[0];
+  }
+
+  function getBankStatementFYCodes() {
+    return Object.keys(BANK_STATEMENT_FILES).filter(function (fy) {
+      var id = BANK_STATEMENT_FILES[fy];
+      return id && id.indexOf('REPLACE') !== 0;
+    });
+  }
+
   return {
     TABS: TABS,
     IE_COLS: IE_COLS,
@@ -227,6 +253,8 @@ var Config = (function () {
     getStakeholdersSheet: getStakeholdersSheet,
     getLookupSheet: getLookupSheet,
     getFinancialSummarySheet: getFinancialSummarySheet,
+    getBankStatementSheet: getBankStatementSheet,
+    getBankStatementFYCodes: getBankStatementFYCodes,
   };
 
 })();
